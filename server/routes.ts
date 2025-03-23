@@ -33,6 +33,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
   const httpServer = createServer(app);
   
+  // API Key for Browser Extension
+  app.post("/api/auth/api-key", authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const userId = req.body.userId;
+      
+      // Generate a long-lived API key for browser extensions/mobile apps
+      const apiKey = jwt.sign(
+        { id: userId, type: "api_key" },
+        JWT_SECRET,
+        { expiresIn: '365d' } // Valid for 1 year
+      );
+      
+      res.status(200).json({ apiKey });
+    } catch (error) {
+      console.error("API key generation error:", error);
+      res.status(500).json({ message: "Failed to generate API key" });
+    }
+  });
+  
+  // Browser Extension Save Route
+  app.post("/api/extension/save", authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const userId = req.body.userId;
+      const { url, title, content, description, siteName, siteIcon } = req.body;
+      
+      // Basic validation
+      if (!url || !title) {
+        return res.status(400).json({ message: "URL and title are required" });
+      }
+      
+      // Create article with extension metadata
+      const article = await storage.createArticle({
+        userId,
+        url,
+        title,
+        content: content || null,
+        description: description || null,
+        siteName: siteName || null,
+        siteIcon: siteIcon || null,
+        savedAt: new Date(),
+        readAt: null,
+        isArchived: false,
+        labels: null,
+        readingProgress: 0
+      });
+      
+      res.status(201).json(article);
+    } catch (error) {
+      console.error("Extension save error:", error);
+      res.status(500).json({ message: "Failed to save article from extension" });
+    }
+  });
+  
   // Authentication routes
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {

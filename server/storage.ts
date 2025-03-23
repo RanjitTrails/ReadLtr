@@ -9,6 +9,8 @@ import {
   type Label,
   type InsertLabel
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -32,110 +34,97 @@ export interface IStorage {
   deleteLabel(id: number): Promise<boolean>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private articles: Map<number, Article>;
-  private labels: Map<number, Label>;
-  private userIdCounter: number;
-  private articleIdCounter: number;
-  private labelIdCounter: number;
-
-  constructor() {
-    this.users = new Map();
-    this.articles = new Map();
-    this.labels = new Map();
-    this.userIdCounter = 1;
-    this.articleIdCounter = 1;
-    this.labelIdCounter = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const result = await db.select().from(users).where(eq(users.username, username));
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.email === email,
-    );
+    const result = await db.select().from(users).where(eq(users.email, email));
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userIdCounter++;
-    const createdAt = new Date();
-    const user: User = { ...insertUser, id, createdAt };
-    this.users.set(id, user);
-    return user;
+    const result = await db.insert(users).values({
+      ...insertUser,
+      createdAt: new Date()
+    }).returning();
+    return result[0];
   }
   
   // Article methods
   async getArticle(id: number): Promise<Article | undefined> {
-    return this.articles.get(id);
+    const result = await db.select().from(articles).where(eq(articles.id, id));
+    return result.length > 0 ? result[0] : undefined;
   }
   
   async getArticlesByUserId(userId: number): Promise<Article[]> {
-    return Array.from(this.articles.values()).filter(
-      (article) => article.userId === userId,
-    );
+    return await db.select().from(articles).where(eq(articles.userId, userId));
   }
   
   async createArticle(insertArticle: InsertArticle): Promise<Article> {
-    const id = this.articleIdCounter++;
-    const savedAt = new Date();
-    const article: Article = { ...insertArticle, id, savedAt };
-    this.articles.set(id, article);
-    return article;
+    const result = await db.insert(articles).values({
+      ...insertArticle,
+      savedAt: new Date()
+    }).returning();
+    return result[0];
   }
   
   async updateArticle(id: number, articleUpdate: Partial<Article>): Promise<Article | undefined> {
-    const article = this.articles.get(id);
-    if (!article) return undefined;
-    
-    const updatedArticle = { ...article, ...articleUpdate };
-    this.articles.set(id, updatedArticle);
-    return updatedArticle;
+    const result = await db
+      .update(articles)
+      .set(articleUpdate)
+      .where(eq(articles.id, id))
+      .returning();
+    return result.length > 0 ? result[0] : undefined;
   }
   
   async deleteArticle(id: number): Promise<boolean> {
-    return this.articles.delete(id);
+    const result = await db
+      .delete(articles)
+      .where(eq(articles.id, id))
+      .returning({ id: articles.id });
+    return result.length > 0;
   }
   
   // Label methods
   async getLabel(id: number): Promise<Label | undefined> {
-    return this.labels.get(id);
+    const result = await db.select().from(labels).where(eq(labels.id, id));
+    return result.length > 0 ? result[0] : undefined;
   }
   
   async getLabelsByUserId(userId: number): Promise<Label[]> {
-    return Array.from(this.labels.values()).filter(
-      (label) => label.userId === userId,
-    );
+    return await db.select().from(labels).where(eq(labels.userId, userId));
   }
   
   async createLabel(insertLabel: InsertLabel): Promise<Label> {
-    const id = this.labelIdCounter++;
-    const label: Label = { ...insertLabel, id };
-    this.labels.set(id, label);
-    return label;
+    const result = await db.insert(labels).values(insertLabel).returning();
+    return result[0];
   }
   
   async updateLabel(id: number, labelUpdate: Partial<Label>): Promise<Label | undefined> {
-    const label = this.labels.get(id);
-    if (!label) return undefined;
-    
-    const updatedLabel = { ...label, ...labelUpdate };
-    this.labels.set(id, updatedLabel);
-    return updatedLabel;
+    const result = await db
+      .update(labels)
+      .set(labelUpdate)
+      .where(eq(labels.id, id))
+      .returning();
+    return result.length > 0 ? result[0] : undefined;
   }
   
   async deleteLabel(id: number): Promise<boolean> {
-    return this.labels.delete(id);
+    const result = await db
+      .delete(labels)
+      .where(eq(labels.id, id))
+      .returning({ id: labels.id });
+    return result.length > 0;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
