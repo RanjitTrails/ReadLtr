@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [ main ]
 
+# Add permissions block to ensure GitHub token has necessary access
+permissions:
+  contents: read
+  deployments: write
+  statuses: write
+  pull-requests: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
