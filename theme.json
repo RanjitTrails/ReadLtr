@@ -1,11 +1,11 @@
 
 {
-  "variant": "default",
-  "primary": "hsl(212 100% 47%)",
-  "secondary": "hsl(217 91% 60%)",
-  "accent": "hsl(220 14% 96%)",
+  "variant": "vibrant",
+  "primary": "hsl(209 100% 50%)",
+  "secondary": "hsl(209 100% 60%)",
+  "accent": "hsl(209 10% 95%)",
   "background": "hsl(0 0% 100%)",
-  "foreground": "hsl(222 47% 11%)",
+  "foreground": "hsl(209 20% 25%)",
   "appearance": "light",
   "radius": 0.5
 }

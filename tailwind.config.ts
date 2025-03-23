@@ -7,12 +7,12 @@ export default {
     extend: {
       colors: {
         omnivore: {
-          primary: "hsl(212 100% 47%)",
-          secondary: "hsl(217 91% 60%)",
-          accent: "hsl(220 14% 96%)",
-          text: "hsl(222 47% 11%)",
-          muted: "hsl(215 16% 47%)",
-          border: "hsl(214 32% 91%)",
+          primary: "hsl(209 100% 50%)",
+          secondary: "hsl(209 100% 60%)",
+          accent: "hsl(209 10% 95%)",
+          text: "hsl(209 20% 25%)",
+          muted: "hsl(209 30% 60%)",
+          border: "hsl(209 15% 90%)",
           background: "hsl(0 0% 100%)"
         }
       },
