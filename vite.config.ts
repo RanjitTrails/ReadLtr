@@ -29,5 +29,11 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
     sourcemap: true,
+    rollupOptions: {
+      external: [],
+      output: {
+        manualChunks: undefined
+      }
+    },
   },
 });

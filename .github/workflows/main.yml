@@ -24,17 +24,26 @@ jobs:
           node-version: 18
           cache: 'npm'
       
-      - name: Install dependencies
-        run: npm install
+      - name: Clean npm cache and install dependencies
+        run: |
+          npm cache clean --force
+          rm -rf node_modules package-lock.json
+          npm install rollup @rollup/rollup-linux-x64-gnu --no-save
+          npm install
         working-directory: ./
       
       # Skip tests for now as they're failing
       # - name: Run tests
       #   run: npm test
       
-      - name: Build
-        run: npm run build
+      - name: Build with platform-specific configuration
+        run: |
+          export VITE_SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
+          export VITE_SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}"
+          export ROLLUP_SKIP_NODEJS_RESOLUTION=true
+          npm run build
         env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           ROLLUP_SKIP_NODEJS_RESOLUTION: true
