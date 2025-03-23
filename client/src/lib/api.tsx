@@ -27,12 +27,12 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   useEffect(() => {
     // Check if user is already logged in
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
-    
+
     if (token && userData) {
       try {
         setUser(JSON.parse(userData));
@@ -42,43 +42,47 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         localStorage.removeItem("user");
       }
     }
-    
+
     setIsLoading(false);
   }, []);
-  
+
   const login = async (username: string, password: string) => {
     const response = await apiRequest("POST", "/api/auth/login", { username, password });
     const data = await response.json();
-    
+
     localStorage.setItem("token", data.token);
     localStorage.setItem("user", JSON.stringify(data.user));
     setUser(data.user);
-    
+
     // Clear any existing queries
     queryClient.clear();
   };
-  
+
   const register = async (data: { username: string; email: string; password: string; name?: string }) => {
     const response = await apiRequest("POST", "/api/auth/register", data);
     const responseData = await response.json();
-    
+
+    if (!response.ok) {
+      throw new Error(responseData.message || "Registration failed"); // Improved error handling
+    }
+
     localStorage.setItem("token", responseData.token);
     localStorage.setItem("user", JSON.stringify(responseData.user));
     setUser(responseData.user);
-    
+
     // Clear any existing queries
     queryClient.clear();
   };
-  
+
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-    
+
     // Clear all queries
     queryClient.clear();
   };
-  
+
   // Create value object first
   const authValue = {
     user,
@@ -88,7 +92,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     register,
     logout,
   };
-  
+
   // Return provider with created value object
   return (
     <AuthContext.Provider value={authValue}>

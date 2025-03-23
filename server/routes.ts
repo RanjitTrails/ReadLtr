@@ -126,7 +126,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.error("Registration error:", error);
-      res.status(500).json({ message: "Failed to register user" });
+      if (error.code === 'P2002') {
+        res.status(409).json({ message: "Username or email already exists" });
+      } else {
+        res.status(500).json({ message: error.message || "Failed to register user" });
+      }
     }
   });
   
