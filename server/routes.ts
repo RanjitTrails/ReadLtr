@@ -468,5 +468,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Social Features
+  app.post("/api/articles/:id/share", authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const articleId = parseInt(req.params.id);
+      const { userIds, isPublic } = req.body;
+      const userId = req.body.userId;
+      
+      const article = await storage.getArticle(articleId);
+      if (!article || article.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      
+      const updatedArticle = await storage.updateArticle(articleId, {
+        sharedWith: userIds,
+        isPublic
+      });
+      
+      res.status(200).json(updatedArticle);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to share article" });
+    }
+  });
+
+  // Reading Goals
+  app.post("/api/users/reading-goals", authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const { readingGoal } = req.body;
+      const userId = req.body.userId;
+      
+      await storage.updateUserSettings(userId, { readingGoal });
+      res.status(200).json({ message: "Reading goal updated" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update reading goal" });
+    }
+  });
+
+  // Text-to-Speech
+  app.post("/api/articles/:id/tts", authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const articleId = parseInt(req.params.id);
+      const { enabled, language } = req.body;
+      const userId = req.body.userId;
+      
+      const article = await storage.getArticle(articleId);
+      if (!article || article.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      
+      const updatedArticle = await storage.updateArticle(articleId, {
+        audioEnabled: enabled,
+        textToSpeechLang: language
+      });
+      
+      res.status(200).json(updatedArticle);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update TTS settings" });
+    }
+  });
+
+  // Collections
+  app.post("/api/articles/:id/collections", authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const articleId = parseInt(req.params.id);
+      const { collections } = req.body;
+      const userId = req.body.userId;
+      
+      const article = await storage.getArticle(articleId);
+      if (!article || article.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      
+      const updatedArticle = await storage.updateArticle(articleId, { collections });
+      res.status(200).json(updatedArticle);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update collections" });
+    }
+  });
+
+  // Reading Reminders
+  app.post("/api/articles/:id/reminder", authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const articleId = parseInt(req.params.id);
+      const { reminderTime } = req.body;
+      const userId = req.body.userId;
+      
+      const article = await storage.getArticle(articleId);
+      if (!article || article.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      
+      const updatedArticle = await storage.updateArticle(articleId, { reminderTime });
+      res.status(200).json(updatedArticle);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to set reminder" });
+    }
+  });
+
   return httpServer;
 }

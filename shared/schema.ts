@@ -33,6 +33,14 @@ export const articles = pgTable("articles", {
   lastReadPosition: integer("last_read_position").default(0),
   darkMode: boolean("dark_mode").default(false),
   customCss: text("custom_css"),
+  readingSpeed: integer("reading_speed"),
+  sharedWith: text("shared_with").array(),
+  isPublic: boolean("is_public").default(false),
+  readingGoal: integer("reading_goal"),
+  reminderTime: timestamp("reminder_time"),
+  collections: text("collections").array(),
+  audioEnabled: boolean("audio_enabled").default(false),
+  textToSpeechLang: text("tts_lang").default("en"),
 });
 
 export const labels = pgTable("labels", {

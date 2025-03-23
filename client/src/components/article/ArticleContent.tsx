@@ -1,147 +1,186 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { BookmarkIcon, SunIcon, MoonIcon, FolderIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Switch } from '../ui/switch';
+import { Share2, BookmarkPlus, Clock, Users, Bookmark } from 'lucide-react';
 
-interface Props {
-  article: Article;
-  onUpdate?: (article: Article) => void;
+interface ArticleContentProps {
+  article: any;
+  onUpdate: (id: number, updates: any) => void;
 }
 
-export default function ArticleContent({ article, onUpdate }: Props) {
-  const { fetch } = useAuth();
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [readingProgress, setReadingProgress] = useState(article.readingProgress || 0);
-  const [isDarkMode, setIsDarkMode] = useState(article.darkMode || false);
-  const [selectedText, setSelectedText] = useState('');
+export default function ArticleContent({ article, onUpdate }: ArticleContentProps) {
+  const [isTextToSpeechEnabled, setIsTextToSpeechEnabled] = useState(article.audioEnabled);
+  const [isDarkMode, setIsDarkMode] = useState(article.darkMode);
+  const [readingProgress, setReadingProgress] = useState(article.readingProgress);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [collectionsModalOpen, setCollectionsModalOpen] = useState(false);
 
+  // Track reading progress
   useEffect(() => {
     const handleScroll = () => {
-      if (!contentRef.current) return;
-      
-      const element = contentRef.current;
-      const totalHeight = element.scrollHeight - element.clientHeight;
-      const progress = Math.round((element.scrollTop / totalHeight) * 100);
-      
-      if (progress !== readingProgress) {
-        setReadingProgress(progress);
-        updateProgress(progress, element.scrollTop);
+      const element = document.getElementById('article-content');
+      if (element) {
+        const progress = Math.floor((window.scrollY / (element.scrollHeight - window.innerHeight)) * 100);
+        setReadingProgress(Math.min(progress, 100));
+        onUpdate(article.id, { readingProgress: progress });
       }
     };
 
-    const content = contentRef.current;
-    if (content) {
-      content.addEventListener('scroll', handleScroll);
-      content.scrollTop = article.lastReadPosition || 0;
-    }
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [article.id, onUpdate]);
 
-    return () => {
-      if (content) {
-        content.removeEventListener('scroll', handleScroll);
-      }
-    };
-  }, []);
-
-  const updateProgress = async (progress: number, position: number) => {
-    try {
-      const response = await fetch(`/api/articles/${article.id}/progress`, {
-        method: 'POST',
-        body: JSON.stringify({ progress, lastReadPosition: position }),
-      });
-      
-      if (response.ok && onUpdate) {
-        const updatedArticle = await response.json();
-        onUpdate(updatedArticle);
-      }
-    } catch (error) {
-      console.error('Failed to update progress:', error);
-    }
-  };
-
-  const handleHighlight = async () => {
-    if (!selectedText) return;
+  // Text-to-speech
+  const toggleTextToSpeech = () => {
+    setIsTextToSpeechEnabled(!isTextToSpeechEnabled);
+    onUpdate(article.id, { audioEnabled: !isTextToSpeechEnabled });
     
-    try {
-      const response = await fetch(`/api/articles/${article.id}/highlights`, {
-        method: 'POST',
-        body: JSON.stringify({ highlight: selectedText }),
-      });
-      
-      if (response.ok && onUpdate) {
-        const updatedArticle = await response.json();
-        onUpdate(updatedArticle);
-      }
-      setSelectedText('');
-    } catch (error) {
-      console.error('Failed to save highlight:', error);
+    if (!isTextToSpeechEnabled) {
+      const utterance = new SpeechSynthesisUtterance(article.content);
+      utterance.lang = article.textToSpeechLang || 'en';
+      window.speechSynthesis.speak(utterance);
+    } else {
+      window.speechSynthesis.cancel();
     }
   };
 
-  const toggleDarkMode = async () => {
-    try {
-      const response = await fetch(`/api/articles/${article.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ darkMode: !isDarkMode }),
-      });
-      
-      if (response.ok) {
-        setIsDarkMode(!isDarkMode);
-        if (onUpdate) {
-          const updatedArticle = await response.json();
-          onUpdate(updatedArticle);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to toggle dark mode:', error);
-    }
+  // Dark mode
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    onUpdate(article.id, { darkMode: !isDarkMode });
   };
 
   return (
-    <article className="max-w-3xl mx-auto p-4">
-      <div className="sticky top-0 bg-white dark:bg-slate-900 p-4 z-10">
-        <div className="flex items-center justify-between mb-4">
-          <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
-            {isDarkMode ? <SunIcon /> : <MoonIcon />}
-          </Button>
-          {selectedText && (
-            <Button onClick={handleHighlight}>
-              <BookmarkIcon className="mr-2 h-4 w-4" />
-              Highlight
+    <div className={`py-8 ${isDarkMode ? 'bg-slate-900 text-white' : 'bg-white'}`}>
+      <div className="max-w-3xl mx-auto px-4">
+        {/* Article Tools */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={isTextToSpeechEnabled}
+                onCheckedChange={toggleTextToSpeech}
+                id="tts"
+              />
+              <Label htmlFor="tts">Text-to-Speech</Label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={isDarkMode}
+                onCheckedChange={toggleDarkMode}
+                id="dark-mode"
+              />
+              <Label htmlFor="dark-mode">Dark Mode</Label>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShareModalOpen(true)}
+            >
+              <Share2 className="h-4 w-4 mr-1" />
+              Share
             </Button>
-          )}
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCollectionsModalOpen(true)}
+            >
+              <BookmarkPlus className="h-4 w-4 mr-1" />
+              Add to Collection
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full flex-grow">
-            <div 
-              className="h-2 bg-primary rounded-full transition-all" 
+        
+        {/* Reading Progress */}
+        <div className="mb-8">
+          <div className="bg-slate-200 rounded-full h-2">
+            <div
+              className="bg-primary rounded-full h-2 transition-all"
               style={{ width: `${readingProgress}%` }}
             />
           </div>
-          <span>{readingProgress}%</span>
+          <p className="text-sm text-slate-500 mt-2">
+            Reading Progress: {readingProgress}%
+          </p>
         </div>
+        
+        {/* Article Content */}
+        <article
+          id="article-content"
+          className={`prose ${isDarkMode ? 'prose-invert' : ''} max-w-none`}
+          dangerouslySetInnerHTML={{ __html: article.content }}
+        />
+        
+        {/* Share Modal */}
+        {shareModalOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+            <Card className="w-96 p-4">
+              <h3 className="text-lg font-semibold mb-4">Share Article</h3>
+              <div className="space-y-4">
+                <div>
+                  <Label>Make Public</Label>
+                  <Switch
+                    checked={article.isPublic}
+                    onCheckedChange={(checked) => {
+                      onUpdate(article.id, { isPublic: checked });
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label>Share with Users</Label>
+                  <Input
+                    placeholder="Enter usernames separated by commas"
+                    onChange={(e) => {
+                      const users = e.target.value.split(',').map(u => u.trim());
+                      onUpdate(article.id, { sharedWith: users });
+                    }}
+                  />
+                </div>
+                <Button onClick={() => setShareModalOpen(false)}>Close</Button>
+              </div>
+            </Card>
+          </div>
+        )}
+        
+        {/* Collections Modal */}
+        {collectionsModalOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+            <Card className="w-96 p-4">
+              <h3 className="text-lg font-semibold mb-4">Add to Collection</h3>
+              <div className="space-y-4">
+                <Input
+                  placeholder="New Collection Name"
+                  onChange={(e) => {
+                    const collections = [...(article.collections || []), e.target.value];
+                    onUpdate(article.id, { collections });
+                  }}
+                />
+                <div className="flex flex-wrap gap-2">
+                  {article.collections?.map((collection: string) => (
+                    <div
+                      key={collection}
+                      className="bg-slate-100 px-3 py-1 rounded-full text-sm flex items-center"
+                    >
+                      <Bookmark className="h-4 w-4 mr-1" />
+                      {collection}
+                    </div>
+                  ))}
+                </div>
+                <Button onClick={() => setCollectionsModalOpen(false)}>Close</Button>
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
-
-      <div 
-        ref={contentRef}
-        className={`prose dark:prose-invert max-w-none mt-8 ${isDarkMode ? 'dark' : ''}`}
-        style={{ maxHeight: 'calc(100vh - 200px)', overflow: 'auto' }}
-        onMouseUp={() => setSelectedText(window.getSelection()?.toString() || '')}
-        dangerouslySetInnerHTML={{ __html: article.content || '' }}
-      />
-
-      {article.highlights && article.highlights.length > 0 && (
-        <div className="mt-8 p-4 bg-primary/5 rounded-lg">
-          <h3 className="font-semibold mb-4">Highlights</h3>
-          <ul className="space-y-2">
-            {article.highlights.map((highlight, i) => (
-              <li key={i} className="pl-4 border-l-2 border-primary">
-                {highlight}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </article>
+    </div>
   );
 }
