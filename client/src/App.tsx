@@ -14,6 +14,7 @@ import Deployment from "@/pages/deployment";
 import FAQ from "@/pages/faq";
 import Library from "@/pages/library";
 import Article from "@/pages/article";
+import Integrations from "@/pages/integrations";
 
 function Router() {
   const [location] = useLocation();
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/faq" component={FAQ} />
       <Route path="/library" component={Library} />
       <Route path="/article/:id" component={Article} />
+      <Route path="/integrations" component={Integrations} />
       <Route component={NotFound} />
     </Switch>
   );

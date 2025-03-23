@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/api.tsx";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Layers } from "lucide-react";
 
 export default function Header() {
   const [location] = useLocation();
@@ -24,6 +24,10 @@ export default function Header() {
                 <Link href="/library" className="text-slate-600 hover:text-primary transition-colors flex items-center">
                   <BookOpen className="h-6 w-6 mr-1" />
                   <span className="hidden md:inline">My Reading List</span>
+                </Link>
+                <Link href="/integrations" className="text-slate-600 hover:text-primary transition-colors flex items-center">
+                  <Layers className="h-6 w-6 mr-1" />
+                  <span className="hidden md:inline">Integrations</span>
                 </Link>
                 <Button 
                   variant="outline" 

@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/api";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CodeBlock } from "@/components/ui/code-block";
-import { ChromeIcon, SmartphoneIcon, ClipboardCopyIcon, CheckIcon, Smartphone } from "lucide-react";
-import { SiApple, SiAndroid, SiFirefox, SiMicrosoftedge, SiGoogle } from "react-icons/si";
+import { Chrome as ChromeIcon, Smartphone as SmartphoneIcon, ClipboardCopy as ClipboardCopyIcon, Check as CheckIcon } from "lucide-react";
+import { SiApple, SiAndroid, SiFirefox, SiGoogle } from "react-icons/si";
 import { toast } from "@/hooks/use-toast";
 
 export default function Integrations() {
@@ -19,14 +19,16 @@ export default function Integrations() {
   // Fetch API key
   const { data: apiKeyData, isLoading, refetch } = useQuery({
     queryKey: ['/api/auth/api-key'],
-    queryFn: async () => apiRequest('/api/auth/api-key', { method: 'POST' }),
+    queryFn: getQueryFn<{ apiKey: string }>({ on401: "throw" }),
     enabled: isAuthenticated
   });
   
   // Generate new API key
   const { mutate: generateApiKey, isPending } = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/auth/api-key', { method: 'POST' });
+      return apiRequest('/api/auth/api-key', { 
+        method: 'POST' 
+      });
     },
     onSuccess: () => {
       refetch();
