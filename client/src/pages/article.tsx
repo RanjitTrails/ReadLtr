@@ -1,245 +1,308 @@
-import { useEffect, useState } from "react";
-import { useRoute, Link } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import { useState, useEffect } from "react";
+import { useRoute } from "wouter";
+import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, Bookmark, Archive, Share, Tag, Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import ArticleContent from "@/components/article/ArticleContent";
-import { type Article } from "@shared/schema";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  Heart, 
+  ExternalLink, 
+  Share2, 
+  ArrowLeft, 
+  BookmarkPlus,
+  Highlighter,
+  MessageSquarePlus,
+  ListPlus,
+  Maximize,
+  Minimize,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+  Minus,
+  Plus,
+  BookOpen,
+  Monitor,
+  X
+} from "lucide-react";
+import { getArticleById, toggleFavorite, markAsRead } from "@/lib/articleService";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import { Link } from "wouter";
+import { formatDistanceToNow } from "date-fns";
 
-export default function ArticlePage() {
-  const [_, params] = useRoute<{ id: string }>("/article/:id");
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("reader");
+const ArticleDetailPage = () => {
+  const [_, params] = useRoute("/article/:id");
+  const articleId = params?.id || "";
   
-  const articleId = params?.id ? parseInt(params.id) : null;
+  const [fullscreen, setFullscreen] = useState(false);
+  const [fontSize, setFontSize] = useState(16);
+  const [fontType, setFontType] = useState<"serif" | "sans-serif">("sans-serif");
+  const [showTools, setShowTools] = useState(true);
+  const [showHighlightTools, setShowHighlightTools] = useState(false);
   
+  // Fetch article details
   const { data: article, isLoading, error } = useQuery({
-    queryKey: [`/api/articles/${articleId}`],
+    queryKey: ['articles', 'detail', articleId],
+    queryFn: () => getArticleById(articleId),
     enabled: !!articleId,
   });
   
-  const archiveMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("PATCH", `/api/articles/${articleId}`, {
-        isArchived: !article.isArchived,
-      });
-    },
+  // Toggle favorite mutation
+  const favoriteMutation = useMutation({
+    mutationFn: toggleFavorite,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/articles/${articleId}`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/articles'] });
-      toast({
-        title: article.isArchived ? "Article unarchived" : "Article archived",
-        description: article.isArchived ? "The article has been moved to your library." : "The article has been archived.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: `Failed to archive article: ${error.message}`,
-        variant: "destructive",
-      });
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
     },
   });
   
-  const deleteMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("DELETE", `/api/articles/${articleId}`, {});
-    },
+  // Mark as read mutation
+  const markAsReadMutation = useMutation({
+    mutationFn: markAsRead,
     onSuccess: () => {
-      toast({
-        title: "Article deleted",
-        description: "The article has been permanently deleted.",
-      });
-      window.location.href = "/library";
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: `Failed to delete article: ${error.message}`,
-        variant: "destructive",
-      });
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
     },
   });
+  
+  // Mark article as read when viewed
+  useEffect(() => {
+    if (article && !article.is_read) {
+      markAsReadMutation.mutate(articleId);
+    }
+  }, [article, articleId, markAsReadMutation]);
+  
+  const handleToggleFavorite = () => {
+    favoriteMutation.mutate(articleId);
+  };
+  
+  const handleToggleFullscreen = () => {
+    setFullscreen(!fullscreen);
+  };
+  
+  const handleIncreaseFontSize = () => {
+    setFontSize((prev) => Math.min(prev + 1, 24));
+  };
+  
+  const handleDecreaseFontSize = () => {
+    setFontSize((prev) => Math.max(prev - 1, 12));
+  };
+  
+  const handleToggleFontType = () => {
+    setFontType((prev) => prev === "serif" ? "sans-serif" : "serif");
+  };
+  
+  // Format published date
+  const formatPublishedDate = (dateString?: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return formatDistanceToNow(date, { addSuffix: true });
+  };
   
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-slate-50">
-        <Header />
-        <main className="flex-grow container mx-auto px-4 py-8">
-          <div className="mb-4">
-            <Link href="/library">
-              <a className="text-slate-600 hover:text-primary flex items-center">
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Back to Library
-              </a>
-            </Link>
+      <Layout>
+        <div className="max-w-3xl mx-auto py-8 px-4">
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="w-16 h-16 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin mb-4"></div>
+            <p className="text-zinc-400">Loading article...</p>
           </div>
-          
-          <Card className="w-full max-w-4xl mx-auto">
-            <CardContent className="p-8">
-              <Skeleton className="h-10 w-3/4 mb-6" />
-              <Skeleton className="h-6 w-1/3 mb-10" />
-              
-              <div className="space-y-4">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-4/5" />
-              </div>
-            </CardContent>
-          </Card>
-        </main>
-        <Footer />
-      </div>
+        </div>
+      </Layout>
     );
   }
   
   if (error || !article) {
     return (
-      <div className="min-h-screen flex flex-col bg-slate-50">
-        <Header />
-        <main className="flex-grow container mx-auto px-4 py-8">
-          <div className="mb-4">
-            <Link href="/library">
-              <a className="text-slate-600 hover:text-primary flex items-center">
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Back to Library
-              </a>
+      <Layout>
+        <div className="max-w-3xl mx-auto py-8 px-4">
+          <div className="bg-red-900/30 border border-red-700 text-red-200 p-4 rounded-md">
+            <p className="font-medium">Error loading article</p>
+            <p className="text-sm mt-1">The article could not be found or there was an error loading it.</p>
+            <Link href="/list">
+              <Button variant="outline" className="mt-4">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
+              </Button>
             </Link>
           </div>
-          
-          <Card className="w-full max-w-4xl mx-auto">
-            <CardContent className="p-8 text-center">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Article Not Found</h2>
-              <p className="text-slate-600 mb-6">
-                The article you're looking for might have been deleted or doesn't exist.
-              </p>
-              <Link href="/library">
-                <Button>
-                  Go to Library
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </main>
-        <Footer />
-      </div>
+        </div>
+      </Layout>
     );
   }
   
-  return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <Header />
-      
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="mb-4">
-          <Link href="/library">
-            <a className="text-slate-600 hover:text-primary flex items-center">
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back to Library
-            </a>
-          </Link>
-        </div>
-        
-        <Card className="w-full max-w-4xl mx-auto mb-6">
-          <div className="border-b border-gray-200">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="w-full bg-transparent justify-start border-b-0 p-0">
-                <TabsTrigger value="reader" className="py-3 px-4">
-                  Reader View
-                </TabsTrigger>
-                <TabsTrigger value="original" className="py-3 px-4">
-                  Original Article
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+  const content = (
+    <div className={`transition-all ${fullscreen ? 'max-w-5xl' : 'max-w-3xl'} mx-auto py-8 px-4`}>
+      {/* Top toolbar */}
+      {showTools && (
+        <div className="sticky top-4 z-10 mb-8 flex items-center justify-between bg-zinc-900/90 backdrop-blur-sm rounded-lg p-2 shadow-md">
+          <div className="flex items-center gap-1">
+            <Link href="/list">
+              <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
+                <ArrowLeft size={20} />
+              </Button>
+            </Link>
+            <div className="h-6 border-r border-zinc-700 mx-1"></div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={`${article.is_favorite ? 'text-red-500' : 'text-zinc-400 hover:text-white'}`}
+              onClick={handleToggleFavorite}
+              aria-label={article.is_favorite ? "Remove from favorites" : "Add to favorites"}
+            >
+              <Heart size={20} />
+            </Button>
+            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
+              <BookmarkPlus size={20} />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-zinc-400 hover:text-white"
+              onClick={() => setShowHighlightTools(!showHighlightTools)}
+            >
+              <Highlighter size={20} />
+            </Button>
           </div>
           
-          <CardContent className="p-8">
-            {activeTab === "reader" ? (
-              <ArticleContent article={article} />
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-slate-600 mb-6">
-                  To view the original article, you can visit the source website.
-                </p>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white" onClick={handleToggleFontType}>
+              {fontType === "serif" ? <BookOpen size={20} /> : <Monitor size={20} />}
+            </Button>
+            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white" onClick={handleDecreaseFontSize}>
+              <Minus size={20} />
+            </Button>
+            <div className="text-zinc-400 w-8 text-center text-sm">{fontSize}</div>
+            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white" onClick={handleIncreaseFontSize}>
+              <Plus size={20} />
+            </Button>
+            <div className="h-6 border-r border-zinc-700 mx-1"></div>
+            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white" onClick={handleToggleFullscreen}>
+              {fullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+            </Button>
+            <a 
+              href={article.url} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-zinc-400 hover:text-white hover:bg-zinc-800 h-9 w-9"
+            >
+              <ExternalLink size={20} />
+            </a>
+          </div>
+        </div>
+      )}
+      
+      {/* Highlight toolbar - shows when highlight mode is active */}
+      {showHighlightTools && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-2 bg-zinc-800 backdrop-blur-sm rounded-lg p-2 shadow-lg">
+          <button className="w-6 h-6 rounded-full bg-yellow-400"></button>
+          <button className="w-6 h-6 rounded-full bg-green-400"></button>
+          <button className="w-6 h-6 rounded-full bg-blue-400"></button>
+          <button className="w-6 h-6 rounded-full bg-purple-400"></button>
+          <button className="w-6 h-6 rounded-full bg-red-400"></button>
+          <div className="h-6 border-r border-zinc-700 mx-1"></div>
+          <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white">
+            <MessageSquarePlus size={18} />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white">
+            <ListPlus size={18} />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white" onClick={() => setShowHighlightTools(false)}>
+            <X size={18} />
+          </Button>
+        </div>
+      )}
+      
+      {/* Article content */}
+      <article>
+        {article.image_url && (
+          <div className="mb-6 rounded-lg overflow-hidden">
+            <img 
+              src={article.image_url} 
+              alt={article.title} 
+              className="w-full object-cover max-h-[400px]"
+            />
+          </div>
+        )}
+        
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-3 leading-tight">{article.title}</h1>
+          
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-400">
+            {article.author && (
+              <div className="flex items-center">
+                <span>By {article.author}</span>
+              </div>
+            )}
+            
+            {article.published_date && (
+              <div className="flex items-center">
+                <span>{formatPublishedDate(article.published_date)}</span>
+              </div>
+            )}
+            
+            {article.domain && (
+              <div className="flex items-center">
                 <a 
                   href={article.url} 
                   target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90"
+                  rel="noopener noreferrer"
+                  className="hover:text-blue-400"
                 >
-                  Visit Original Article
+                  {article.domain}
                 </a>
               </div>
             )}
-          </CardContent>
-        </Card>
-        
-        <div className="w-full max-w-4xl mx-auto flex justify-between items-center">
-          <div className="flex space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => archiveMutation.mutate()}
-              disabled={archiveMutation.isPending}
-            >
-              {article.isArchived ? (
-                <>
-                  <Bookmark className="h-4 w-4 mr-2" />
-                  Unarchive
-                </>
-              ) : (
-                <>
-                  <Archive className="h-4 w-4 mr-2" />
-                  Archive
-                </>
-              )}
-            </Button>
             
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (window.confirm("Are you sure you want to delete this article? This action cannot be undone.")) {
-                  deleteMutation.mutate();
-                }
-              }}
-              disabled={deleteMutation.isPending}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
+            {article.read_time && (
+              <div className="flex items-center">
+                <span>{article.read_time} min read</span>
+              </div>
+            )}
           </div>
-          
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                navigator.clipboard.writeText(article.url);
-                toast({
-                  title: "Link copied",
-                  description: "The article link has been copied to your clipboard.",
-                });
-              }}
-            >
-              <Share className="h-4 w-4 mr-2" />
-              Share
-            </Button>
+        </header>
+        
+        <div 
+          className={`prose dark:prose-invert max-w-none 
+            ${fontType === "serif" ? "prose-serif" : "prose-sans"} 
+            article-content`}
+          style={{ 
+            fontSize: `${fontSize}px`,
+            lineHeight: 1.7
+          }}
+          dangerouslySetInnerHTML={{ __html: article.content || "" }}
+        />
+        
+        {article.tags && article.tags.length > 0 && (
+          <div className="mt-10 pt-6 border-t border-zinc-800">
+            <h3 className="text-sm font-medium text-zinc-400 mb-2">Tags</h3>
+            <div className="flex flex-wrap gap-2">
+              {article.tags.map((tag: string) => (
+                <Link key={tag} href={`/tags/${tag}`}>
+                  <a className="px-3 py-1 text-sm bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-full">
+                    {tag}
+                  </a>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </main>
+        )}
+      </article>
       
-      <Footer />
+      {/* Article navigation */}
+      <div className="mt-10 pt-6 border-t border-zinc-800 flex justify-between">
+        <Button variant="outline" className="gap-1 text-zinc-400">
+          <ChevronLeft size={16} />
+          <span>Previous</span>
+        </Button>
+        <Button variant="outline" className="gap-1 text-zinc-400">
+          <span>Next</span>
+          <ChevronRight size={16} />
+        </Button>
+      </div>
     </div>
   );
-}
+  
+  return (
+    <Layout>
+      {content}
+    </Layout>
+  );
+};
+
+export default ArticleDetailPage;

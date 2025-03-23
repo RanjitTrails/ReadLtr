@@ -1,130 +1,98 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { Link, useLocation } from "wouter";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useAuth } from "@/lib/api.tsx";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { BookOpen, AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-
-const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+import { useAuth } from "@/lib/api";
+import { AlertCircle } from "lucide-react";
 
 export default function Login() {
-  const [_, navigate] = useLocation();
-  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
-  });
-
-  const onSubmit = async (data: LoginFormValues) => {
-    setIsLoading(true);
+  const [, navigate] = useLocation();
+  
+  const { login } = useAuth();
+  
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
+    setIsLoading(true);
     
     try {
-      await login(data.username, data.password);
-      navigate("/library");
-    } catch (error) {
-      setError("Invalid username or password. Please try again.");
+      await login(email, password);
+      navigate("/list"); // Navigate to the main page after successful login
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err.message || "Invalid email or password");
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
-      <div className="flex items-center mb-8">
-        <BookOpen className="h-8 w-8 text-primary mr-2" />
-        <h1 className="text-2xl font-bold text-slate-900">Self-Host Omnivore</h1>
-      </div>
-      
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Login</CardTitle>
-          <CardDescription className="text-center">
-            Sign in to your account to access your reading list
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white p-4">
+      <div className="w-full max-w-md">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold mb-2">ReadLtr</h1>
+          <p className="text-zinc-400">Sign in to your account</p>
+        </div>
+        
+        <div className="bg-zinc-900 rounded-lg p-8">
           {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+            <div className="mb-4 p-3 bg-red-900/50 border border-red-800 rounded-md flex items-start text-sm">
+              <AlertCircle className="h-5 w-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
           )}
           
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <Input placeholder="yourusername" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">Email</label>
+              <input
+                type="email"
+                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
-              
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Password</label>
+              <input
+                type="password"
+                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
-              
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign In"}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <p className="text-sm text-slate-600">
-            Don't have an account?{" "}
-            <Link href="/register">
-              <a className="text-primary hover:underline">Register</a>
-            </Link>
-          </p>
-        </CardFooter>
-      </Card>
-      
-      <div className="mt-8">
-        <Link href="/">
-          <a className="text-sm text-slate-600 hover:text-primary">← Back to Home</a>
-        </Link>
+              <div className="mt-1 text-right">
+                <Link href="/forgot-password">
+                  <a className="text-sm text-blue-400 hover:text-blue-300">Forgot password?</a>
+                </Link>
+              </div>
+            </div>
+            
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? "Signing in..." : "Sign in"}
+            </Button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-zinc-400 text-sm">
+              Don't have an account?{" "}
+              <Link href="/register">
+                <a className="text-blue-400 hover:text-blue-300">Create account</a>
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

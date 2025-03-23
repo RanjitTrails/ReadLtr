@@ -1,168 +1,143 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { Link, useLocation } from "wouter";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useAuth } from "@/lib/api.tsx";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { BookOpen, AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-
-const registerSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  name: z.string().optional(),
-});
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
+import { useAuth } from "@/lib/api";
+import { AlertCircle } from "lucide-react";
 
 export default function Register() {
-  const [_, navigate] = useLocation();
-  const { register } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  const form = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      username: "",
-      email: "",
-      password: "",
-      name: "",
-    },
-  });
-
-  const onSubmit = async (data: RegisterFormValues) => {
-    setIsLoading(true);
+  const [, navigate] = useLocation();
+  
+  const { register } = useAuth();
+  
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
     
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    
+    // Validate password strength
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+    
+    setIsLoading(true);
+    
     try {
-      await register(data);
-      navigate("/library");
-    } catch (error) {
-      if (error.message?.includes("Username already exists")) {
-        setError("This username is already taken. Please choose another one.");
-      } else if (error.message?.includes("Email already exists")) {
-        setError("An account with this email already exists.");
-      } else {
-        setError("Registration failed. Please try again.");
-      }
+      await register(email, password, name || email.split('@')[0]);
+      navigate("/list"); // Navigate to the main page after successful registration
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      setError(err.message || "Failed to register. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
-      <div className="flex items-center mb-8">
-        <BookOpen className="h-8 w-8 text-primary mr-2" />
-        <h1 className="text-2xl font-bold text-slate-900">Self-Host Omnivore</h1>
-      </div>
-      
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Create Account</CardTitle>
-          <CardDescription className="text-center">
-            Sign up for a new account to start saving articles
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white p-4">
+      <div className="w-full max-w-md">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold mb-2">ReadLtr</h1>
+          <p className="text-zinc-400">Create your account</p>
+        </div>
+        
+        <div className="bg-zinc-900 rounded-lg p-8">
           {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+            <div className="mb-4 p-3 bg-red-900/50 border border-red-800 rounded-md flex items-start text-sm">
+              <AlertCircle className="h-5 w-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
           )}
           
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <Input placeholder="yourusername" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+          <form onSubmit={handleRegister} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">Email</label>
+              <input
+                type="email"
+                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
-              
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="you@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Name (optional)</label>
+              <input
+                type="text"
+                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
               />
-              
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Password</label>
+              <input
+                type="password"
+                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
-              
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Confirm Password</label>
+              <input
+                type="password"
+                className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
               />
-              
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating account..." : "Create Account"}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <p className="text-sm text-slate-600">
-            Already have an account?{" "}
-            <Link href="/login">
-              <a className="text-primary hover:underline">Login</a>
-            </Link>
-          </p>
-        </CardFooter>
-      </Card>
-      
-      <div className="mt-8">
-        <Link href="/">
-          <a className="text-sm text-slate-600 hover:text-primary">← Back to Home</a>
-        </Link>
+            </div>
+            
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="terms"
+                className="h-4 w-4 bg-zinc-800 border-zinc-700 rounded"
+                required
+              />
+              <label htmlFor="terms" className="ml-2 text-sm">
+                I agree to the <a href="#" className="text-blue-400 hover:text-blue-300">Terms of Service</a> and <a href="#" className="text-blue-400 hover:text-blue-300">Privacy Policy</a>
+              </label>
+            </div>
+            
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isLoading}
+            >
+              {isLoading ? "Creating Account..." : "Create Account"}
+            </Button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-zinc-400 text-sm">
+              Already have an account?{" "}
+              <Link href="/login">
+                <a className="text-blue-400 hover:text-blue-300">Sign in</a>
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

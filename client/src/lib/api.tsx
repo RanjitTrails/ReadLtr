@@ -1,113 +1,214 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { apiRequest } from "./queryClient";
-import { queryClient } from "./queryClient";
+import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { supabase, Profile } from './supabase';
+import { Session, User } from '@supabase/supabase-js';
 
-interface User {
-  id: number;
-  username: string;
+// Types
+export interface AuthUser {
+  id: string;
   email: string;
-  name?: string;
+  name: string;
+  avatar?: string;
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
+  session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<void>;
-  register: (data: { username: string; email: string; password: string; name?: string }) => Promise<void>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+// Create the auth context
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
+// Auth provider component
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session ? convertUserData(session.user) : null);
+      setIsLoading(false);
+    });
 
-    if (token && userData) {
-      try {
-        setUser(JSON.parse(userData));
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-      }
-    }
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session ? convertUserData(session.user) : null);
+      setIsLoading(false);
+    });
 
-    setIsLoading(false);
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (username: string, password: string) => {
-    const response = await apiRequest("POST", "/api/auth/login", { username, password });
-    const data = await response.json();
+  // Convert Supabase user to app user format
+  const convertUserData = async (supabaseUser: User): Promise<AuthUser> => {
+    // Get user profile from profiles table
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', supabaseUser.id)
+      .single();
 
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    setUser(data.user);
-
-    // Clear any existing queries
-    queryClient.clear();
+    return {
+      id: supabaseUser.id,
+      email: supabaseUser.email || '',
+      name: profile?.name || supabaseUser.email?.split('@')[0] || 'User',
+      avatar: profile?.avatar_url
+    };
   };
 
-  const register = async (data: { username: string; email: string; password: string; name?: string }) => {
+  // Create or update user profile
+  const upsertProfile = async (userId: string, name: string) => {
+    // Create avatar URL from name
+    const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
+    
+    // Insert or update profile
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({ 
+        id: userId, 
+        name, 
+        avatar_url: avatar 
+      });
+
+    if (error) throw error;
+  };
+
+  // Login function
+  const login = async (email: string, password: string) => {
+    setIsLoading(true);
     try {
-      const response = await apiRequest("POST", "/api/auth/register", data);
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(responseData.message);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        setUser(await convertUserData(data.user));
       }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      localStorage.setItem("token", responseData.token);
-      localStorage.setItem("user", JSON.stringify(responseData.user));
-      setUser(responseData.user);
-      queryClient.clear();
+  // Register function
+  const register = async (email: string, password: string, name: string) => {
+    setIsLoading(true);
+    try {
+      // Sign up with Supabase
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        // Create user profile
+        await upsertProfile(data.user.id, name);
+        
+        // Set user data
+        setUser({
+          id: data.user.id,
+          email: data.user.email || '',
+          name,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+        });
+      }
     } catch (error) {
       console.error('Registration error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Logout function
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+    } catch (error) {
+      console.error('Logout error:', error);
       throw error;
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
-
-    // Clear all queries
-    queryClient.clear();
-  };
-
-  // Create value object first
-  const authValue = {
+  // Create context value
+  const value = {
     user,
+    session,
     isAuthenticated: !!user,
     isLoading,
     login,
     register,
-    logout,
+    logout
   };
 
-  // Return provider with created value object
-  return (
-    <AuthContext.Provider value={authValue}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
 
-export const useAuth = () => {
+// Custom hook to use auth context
+export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}
+
+// API Base URL for non-Supabase endpoints
+const API_BASE_URL = '/api';
+
+// API client for making requests to custom endpoints
+export async function apiClient<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  
+  // Default headers
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers
+  };
+  
+  const config = {
+    ...options,
+    headers
+  };
+  
+  // Get session token for auth
+  const { data } = await supabase.auth.getSession();
+  if (data.session?.access_token) {
+    (config.headers as any).Authorization = `Bearer ${data.session.access_token}`;
+  }
+  
+  try {
+    const response = await fetch(url, config);
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API error:', error);
+    throw error;
+  }
+}

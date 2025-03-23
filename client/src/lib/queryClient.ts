@@ -1,75 +1,126 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { supabase } from './supabase';
 
-async function throwIfResNotOk(res: Response) {
-  if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
-  }
-}
-
-export async function apiRequest<T = Response>(
-  urlOrOptions: string | { url?: string, method?: string, body?: unknown },
-  options?: { method?: string, body?: unknown },
-): Promise<T> {
-  let url: string;
-  let method: string = 'GET';
-  let data: unknown | undefined = undefined;
-  
-  if (typeof urlOrOptions === 'string') {
-    url = urlOrOptions;
-    if (options) {
-      method = options.method || 'GET';
-      data = options.body;
-    }
-  } else {
-    url = urlOrOptions.url || '';
-    method = urlOrOptions.method || 'GET';
-    data = urlOrOptions.body;
-  }
-  
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  if (res.headers.get('content-type')?.includes('application/json')) {
-    return res.json();
-  }
-  return res as unknown as T;
-}
-
-type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
-
-    await throwIfResNotOk(res);
-    return await res.json();
-  };
-
+// Configure global defaults for all queries
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
+      // How long the data in the cache will remain fresh (in milliseconds)
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      
+      // How many times to retry failed queries
+      retry: 1,
+      
+      // If true, the query will be refetched when the window regains focus
+      refetchOnWindowFocus: true,
+      
+      // If true, the query will be refetched when the component using it is remounted
+      refetchOnMount: true,
+      
+      // Placeholder and error data handling
+      placeholderData: keepPreviousData,
     },
     mutations: {
-      retry: false,
+      // How many times to retry failed mutations
+      retry: 0,
     },
   },
 });
+
+// Helper function to keep previous data while fetching new data
+function keepPreviousData<T>(previousData: T | undefined): T | undefined {
+  return previousData;
+}
+
+// Query keys for caching and invalidation
+export const queryKeys = {
+  articles: {
+    all: ['articles'] as const,
+    lists: () => [...queryKeys.articles.all, 'list'] as const,
+    list: (filters: string) => [...queryKeys.articles.lists(), filters] as const,
+    details: () => [...queryKeys.articles.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.articles.details(), id] as const,
+  },
+  tags: {
+    all: ['tags'] as const,
+  },
+  user: {
+    all: ['user'] as const,
+    preferences: () => [...queryKeys.user.all, 'preferences'] as const,
+  },
+};
+
+type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+export async function apiRequest<T = any>(
+  method: Method,
+  endpoint: string,
+  data?: any
+): Promise<T> {
+  // Extract the resource and ID from the endpoint
+  // Example: /api/articles/123 -> resource = 'articles', id = '123'
+  const parts = endpoint.replace(/^\/api\//, '').split('/');
+  const resource = parts[0];
+  const id = parts.length > 1 ? parts[1] : undefined;
+  
+  try {
+    let response;
+    
+    // Handle different HTTP methods
+    switch (method) {
+      case 'GET':
+        if (id) {
+          // Get a single item
+          response = await supabase
+            .from(resource)
+            .select('*')
+            .eq('id', id)
+            .single();
+        } else {
+          // Get all items
+          response = await supabase
+            .from(resource)
+            .select('*');
+        }
+        break;
+        
+      case 'POST':
+        // Create a new item
+        response = await supabase
+          .from(resource)
+          .insert(data)
+          .select();
+        break;
+        
+      case 'PUT':
+      case 'PATCH':
+        // Update an existing item
+        if (!id) throw new Error('ID is required for update operations');
+        response = await supabase
+          .from(resource)
+          .update(data)
+          .eq('id', id)
+          .select();
+        break;
+        
+      case 'DELETE':
+        // Delete an item
+        if (!id) throw new Error('ID is required for delete operations');
+        response = await supabase
+          .from(resource)
+          .delete()
+          .eq('id', id);
+        break;
+        
+      default:
+        throw new Error(`Unsupported method: ${method}`);
+    }
+    
+    if (response.error) throw response.error;
+    
+    return response.data as T;
+  } catch (error) {
+    console.error('API request error:', error);
+    throw error;
+  }
+}

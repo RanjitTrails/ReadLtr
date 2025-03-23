@@ -1,0 +1,49 @@
+# Netlify configuration
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Handle SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Environment variable configuration
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
+
+# Production context
+[context.production]
+  command = "npm run build"
+
+# Deploy preview context
+[context.deploy-preview]
+  command = "npm run build"
+
+# Headers for caching and security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer-when-downgrade"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://ui-avatars.com; connect-src 'self' https://*.supabase.co"
+
+# Cache static assets
+[[headers]]
+  for = "*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.woff2"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable" 
