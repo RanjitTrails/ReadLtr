@@ -19,12 +19,12 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
             <div className="text-center">
               <h1 className="text-4xl font-extrabold text-slate-900 sm:text-5xl md:text-6xl">
-                Self-Host Your Own
-                <span className="block text-primary">Read-It-Later App</span>
+                ReadLtr
+                <span className="block text-primary">Your Personal Reading Library</span>
               </h1>
               <p className="mt-6 max-w-2xl mx-auto text-xl text-slate-600">
-                Keep your reading list private and take control of your data with this
-                self-hosted version of Omnivore.
+                Save articles, webpages and newsletters to read later. 
+                Organize your content with labels and keep track of your reading progress.
               </p>
               <div className="mt-10 flex justify-center gap-4">
                 {user ? (
@@ -119,15 +119,15 @@ export default function Home() {
           </div>
         </div>
         
-        {/* Getting Started Section */}
+        {/* How It Works Section */}
         <div className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-slate-900">
-                Ready to Start?
+                How ReadLtr Works
               </h2>
               <p className="mt-4 text-lg text-slate-600">
-                Follow our step-by-step guide to set up your own Omnivore instance
+                Save and organize your reading in three simple steps
               </p>
             </div>
             
@@ -137,16 +137,11 @@ export default function Home() {
                   <div className="flex-shrink-0 rounded-full bg-primary p-2 text-white">
                     <span className="text-sm font-semibold">1</span>
                   </div>
-                  <h3 className="ml-3 text-lg font-medium text-slate-900">Clone Repository</h3>
+                  <h3 className="ml-3 text-lg font-medium text-slate-900">Save Content</h3>
                 </div>
                 <p className="text-slate-600">
-                  Fork and clone the Omnivore repository to your personal Git account
+                  Add articles, blog posts, newsletters and other web content to your library
                 </p>
-                <div className="mt-4">
-                  <Link href="/setup">
-                    <a className="text-primary hover:underline font-medium">Learn more →</a>
-                  </Link>
-                </div>
               </div>
               
               <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
@@ -154,16 +149,11 @@ export default function Home() {
                   <div className="flex-shrink-0 rounded-full bg-primary p-2 text-white">
                     <span className="text-sm font-semibold">2</span>
                   </div>
-                  <h3 className="ml-3 text-lg font-medium text-slate-900">Configure</h3>
+                  <h3 className="ml-3 text-lg font-medium text-slate-900">Organize</h3>
                 </div>
                 <p className="text-slate-600">
-                  Set up environment variables and configure the application for your server
+                  Add labels to categorize your content and make it easier to find later
                 </p>
-                <div className="mt-4">
-                  <Link href="/configuration">
-                    <a className="text-primary hover:underline font-medium">Learn more →</a>
-                  </Link>
-                </div>
               </div>
               
               <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
@@ -171,23 +161,18 @@ export default function Home() {
                   <div className="flex-shrink-0 rounded-full bg-primary p-2 text-white">
                     <span className="text-sm font-semibold">3</span>
                   </div>
-                  <h3 className="ml-3 text-lg font-medium text-slate-900">Deploy</h3>
+                  <h3 className="ml-3 text-lg font-medium text-slate-900">Read</h3>
                 </div>
                 <p className="text-slate-600">
-                  Deploy the application to your server and start using it right away
+                  Enjoy distraction-free reading with automatic progress tracking
                 </p>
-                <div className="mt-4">
-                  <Link href="/deployment">
-                    <a className="text-primary hover:underline font-medium">Learn more →</a>
-                  </Link>
-                </div>
               </div>
             </div>
             
             <div className="mt-12 text-center">
-              <Link href="/overview">
+              <Link href="/register">
                 <Button size="lg">
-                  Get Started Guide
+                  Create Your Account
                 </Button>
               </Link>
             </div>
