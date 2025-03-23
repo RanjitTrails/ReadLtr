@@ -26,8 +26,9 @@ export default function Integrations() {
   // Generate new API key
   const { mutate: generateApiKey, isPending } = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/auth/api-key', { 
-        method: 'POST' 
+      return apiRequest<{ apiKey: string }>({
+        url: '/api/auth/api-key',
+        method: 'POST'
       });
     },
     onSuccess: () => {
@@ -98,7 +99,7 @@ export default function Integrations() {
                   variant="ghost" 
                   size="sm"
                   disabled={!apiKeyData?.apiKey || copied}
-                  onClick={() => copyToClipboard(apiKeyData?.apiKey)}
+                  onClick={() => apiKeyData?.apiKey && copyToClipboard(apiKeyData.apiKey)}
                 >
                   {copied ? <CheckIcon className="h-4 w-4" /> : <ClipboardCopyIcon className="h-4 w-4" />}
                 </Button>

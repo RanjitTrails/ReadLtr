@@ -26,7 +26,7 @@ export default function Library() {
   const [isAddingArticle, setIsAddingArticle] = useState(false);
   
   // Fetch articles
-  const { data: articles, isLoading, error } = useQuery({
+  const { data: articles, isLoading, error } = useQuery<Article[]>({
     queryKey: ['/api/articles'],
     enabled: isAuthenticated,
   });
@@ -87,11 +87,15 @@ export default function Library() {
       }
       
       // Add article by URL
-      await apiRequest('POST', '/api/articles', {
-        url,
-        title: url, // We'll use the URL as title initially, the backend can update this after parsing
-        content: '',
-        description: '',
+      await apiRequest({
+        url: '/api/articles',
+        method: 'POST',
+        body: {
+          url,
+          title: url, // We'll use the URL as title initially, the backend can update this after parsing
+          content: '',
+          description: '',
+        }
       });
       
       toast({
@@ -105,7 +109,7 @@ export default function Library() {
     } catch (error) {
       toast({
         title: "Error adding article",
-        description: error.message || "Failed to add article",
+        description: error instanceof Error ? error.message : "Failed to add article",
         variant: "destructive",
       });
     } finally {
