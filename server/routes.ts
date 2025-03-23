@@ -72,7 +72,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: description || null,
         siteName: siteName || null,
         siteIcon: siteIcon || null,
-        savedAt: new Date(),
         readAt: null,
         isArchived: false,
         labels: null,

@@ -129,38 +129,83 @@ export default function Integrations() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <SiGoogle className="h-5 w-5 mr-2 text-primary" />
-                      Chrome Extension
+                      <ChromeIcon className="h-5 w-5 mr-2 text-primary" />
+                      ReadLtr Bookmarklet
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="mb-4">Install our Chrome extension to save articles directly from your browser.</p>
+                    <p className="mb-4">Use our bookmarklet to save articles from any browser:</p>
                     <ol className="list-decimal list-inside space-y-2 mb-6">
-                      <li>Download the extension from the Chrome Web Store</li>
-                      <li>Click on the ReadLtr icon in your browser</li>
-                      <li>Paste your API Key to connect your account</li>
-                      <li>Right-click on any page or use the extension button to save articles</li>
+                      <li>Drag the button below to your bookmarks bar</li>
+                      <li>Navigate to any article you want to save</li>
+                      <li>Click the bookmarklet to save the article</li>
                     </ol>
-                    <Button disabled className="w-full">Coming Soon</Button>
+                    <div className="border border-slate-200 bg-slate-50 p-4 rounded-md text-center mb-4">
+                      <p className="mb-3 text-xs text-slate-500">Drag this button to your bookmarks bar:</p>
+                      <a 
+                        href={`javascript:(function(){
+                          const apiKey = '${apiKeyData?.apiKey || "YOUR_API_KEY"}';
+                          if(apiKey === 'YOUR_API_KEY') {
+                            alert('Please generate an API key in ReadLtr first');
+                            window.open('${window.location.origin}/integrations');
+                            return;
+                          }
+                          const pageData = {
+                            url: window.location.href,
+                            title: document.title,
+                            description: document.querySelector('meta[name="description"]')?.getAttribute('content') || '',
+                            siteName: document.querySelector('meta[property="og:site_name"]')?.getAttribute('content') || window.location.hostname
+                          };
+                          fetch('${window.location.origin}/api/extension/save', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': 'Bearer ' + apiKey
+                            },
+                            body: JSON.stringify(pageData)
+                          })
+                          .then(response => {
+                            if(response.ok) {
+                              alert('Article saved to ReadLtr!');
+                            } else {
+                              throw new Error('Failed to save article');
+                            }
+                          })
+                          .catch(error => {
+                            alert('Error: ' + error.message);
+                          });
+                        })()`}
+                        className="bg-primary text-white font-medium py-2 px-4 rounded no-underline inline-block"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        Save to ReadLtr
+                      </a>
+                    </div>
+                    <p className="text-xs text-slate-500">The bookmarklet automatically uses your API key to authenticate requests.</p>
                   </CardContent>
                 </Card>
                 
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <SiFirefox className="h-5 w-5 mr-2 text-primary" />
-                      Firefox Extension
+                      <SmartphoneIcon className="h-5 w-5 mr-2 text-primary" />
+                      Share to ReadLtr
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="mb-4">Install our Firefox extension to save articles directly from your browser.</p>
+                    <p className="mb-4">Save articles while browsing on your phone:</p>
                     <ol className="list-decimal list-inside space-y-2 mb-6">
-                      <li>Download the extension from Firefox Add-ons</li>
-                      <li>Click on the ReadLtr icon in your browser</li>
-                      <li>Paste your API Key to connect your account</li>
-                      <li>Right-click on any page or use the extension button to save articles</li>
+                      <li>Copy the article URL you want to save</li>
+                      <li>Open ReadLtr in a new tab</li>
+                      <li>Go to your Library and paste the URL in the "Add Article" field</li>
+                      <li>Click "Add" to save the article</li>
                     </ol>
-                    <Button disabled className="w-full">Coming Soon</Button>
+                    <Button 
+                      className="w-full"
+                      onClick={() => window.location.href = '/library'}
+                    >
+                      Go to Library
+                    </Button>
                   </CardContent>
                 </Card>
                 
