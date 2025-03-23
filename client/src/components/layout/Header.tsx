@@ -21,11 +21,9 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
-                <Link href="/library">
-                  <a className="text-slate-600 hover:text-primary transition-colors flex items-center">
-                    <BookOpen className="h-6 w-6 mr-1" />
-                    <span className="hidden md:inline">My Reading List</span>
-                  </a>
+                <Link href="/library" className="text-slate-600 hover:text-primary transition-colors flex items-center">
+                  <BookOpen className="h-6 w-6 mr-1" />
+                  <span className="hidden md:inline">My Reading List</span>
                 </Link>
                 <Button 
                   variant="outline" 
@@ -36,11 +34,11 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Link href="/login">
-                  <a className="text-slate-600 hover:text-primary transition-colors">Login</a>
+                <Link href="/login" className="text-slate-600 hover:text-primary transition-colors">
+                  Login
                 </Link>
-                <Link href="/register">
-                  <a className="text-slate-600 hover:text-primary transition-colors">Register</a>
+                <Link href="/register" className="text-slate-600 hover:text-primary transition-colors">
+                  Register
                 </Link>
               </>
             )}
@@ -50,30 +48,20 @@ export default function Header() {
         {isDocsPage && (
           <div className="border-t border-gray-200">
             <nav className="-mb-px flex space-x-8">
-              <Link href="/overview">
-                <a className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${location === '/overview' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
-                  Overview
-                </a>
+              <Link href="/overview" className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${location === '/overview' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+                Overview
               </Link>
-              <Link href="/setup">
-                <a className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${location === '/setup' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
-                  Setup
-                </a>
+              <Link href="/setup" className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${location === '/setup' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+                Setup
               </Link>
-              <Link href="/configuration">
-                <a className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${location === '/configuration' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
-                  Configuration
-                </a>
+              <Link href="/configuration" className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${location === '/configuration' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+                Configuration
               </Link>
-              <Link href="/deployment">
-                <a className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${location === '/deployment' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
-                  Deployment
-                </a>
+              <Link href="/deployment" className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${location === '/deployment' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+                Deployment
               </Link>
-              <Link href="/faq">
-                <a className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${location === '/faq' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
-                  FAQ
-                </a>
+              <Link href="/faq" className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${location === '/faq' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+                FAQ
               </Link>
             </nav>
           </div>
