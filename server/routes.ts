@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 import { ZodError } from "zod";
 
 // JWT Secret
-const JWT_SECRET = process.env.JWT_SECRET || "omnivore-secret-key";
+const JWT_SECRET = process.env.JWT_SECRET || "readltr-secret-key";
 
 // Middleware to verify JWT token
 const authenticateToken = (req: Request, res: Response, next: any) => {

@@ -14,12 +14,12 @@ export default function Setup() {
           
           <div className="mb-8">
             <h3 className="text-xl font-semibold text-slate-900 mb-3">1. Clone the Repository</h3>
-            <p className="text-slate-600 mb-4">First, fork the Omnivore repository to your GitHub account, then clone it to your local machine:</p>
+            <p className="text-slate-600 mb-4">First, fork the ReadLtr repository to your GitHub account, then clone it to your local machine:</p>
             
             <CodeBlock language="bash">
 {`# Fork the repository on GitHub first, then:
-git clone https://github.com/YOUR_USERNAME/omnivore.git
-cd omnivore`}
+git clone https://github.com/YOUR_USERNAME/readltr.git
+cd readltr`}
             </CodeBlock>
           </div>
           
@@ -141,7 +141,7 @@ STORAGE_TYPE=s3
 S3_ENDPOINT=http://minio:9000
 S3_ACCESS_KEY=minioadmin
 S3_SECRET_KEY=minioadmin
-S3_BUCKET_NAME=omnivore
+S3_BUCKET_NAME=readltr
 S3_REGION=us-east-1`}
             </CodeBlock>
           </div>

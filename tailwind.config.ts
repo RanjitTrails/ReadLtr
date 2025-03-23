@@ -6,7 +6,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        omnivore: {
+        readltr: {
           primary: "hsl(209 100% 50%)",
           secondary: "hsl(209 100% 60%)",
           accent: "hsl(209 10% 95%)",

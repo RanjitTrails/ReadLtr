@@ -12,9 +12,9 @@ export default function Overview() {
       
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Self-Hosting Omnivore</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Self-Hosting ReadLtr</h2>
           <p className="text-slate-600 mb-4">
-            Omnivore is an open-source read-it-later application that allows you to save articles, newsletters, and other content from across the web. With the official service shutting down, this guide will help you set up and deploy your own self-hosted instance.
+            ReadLtr is an open-source read-it-later application that allows you to save articles, newsletters, and other content from across the web. This guide will help you set up and deploy your own self-hosted instance.
           </p>
           
           <div className="bg-amber-50 border-l-4 border-warning p-4 my-6">
