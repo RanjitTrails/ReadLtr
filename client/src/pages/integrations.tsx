@@ -5,10 +5,11 @@ import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CodeBlock } from "@/components/ui/code-block";
-import { Chrome as ChromeIcon, Smartphone as SmartphoneIcon, ClipboardCopy as ClipboardCopyIcon, Check as CheckIcon } from "lucide-react";
+import { Chrome as ChromeIcon, Smartphone as SmartphoneIcon, ClipboardCopy as ClipboardCopyIcon, Check as CheckIcon, AlertCircle } from "lucide-react";
 import { SiApple, SiAndroid, SiFirefox, SiGoogle } from "react-icons/si";
 import { toast } from "@/hooks/use-toast";
 
@@ -65,6 +66,17 @@ export default function Integrations() {
               <CardTitle>Authentication Required</CardTitle>
               <CardDescription>Please log in to view integrations.</CardDescription>
             </CardHeader>
+            <CardContent>
+              <p className="mb-4">You need to be logged in to access ReadLtr's cross-platform features.</p>
+              <div className="flex gap-4">
+                <Link href="/login">
+                  <Button>Sign In</Button>
+                </Link>
+                <Link href="/register">
+                  <Button variant="outline">Register</Button>
+                </Link>
+              </div>
+            </CardContent>
           </Card>
         </main>
         <Footer />
@@ -104,6 +116,16 @@ export default function Integrations() {
                   {copied ? <CheckIcon className="h-4 w-4" /> : <ClipboardCopyIcon className="h-4 w-4" />}
                 </Button>
               </div>
+              
+              {!apiKeyData?.apiKey && !isLoading && (
+                <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-4 text-sm text-yellow-800 flex items-start mt-4">
+                  <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">Generate an API key first</p>
+                    <p>You need to generate an API key to use the bookmarklet and other integrations.</p>
+                  </div>
+                </div>
+              )}
             </CardContent>
             <CardFooter>
               <Button

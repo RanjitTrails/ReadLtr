@@ -155,20 +155,23 @@ export default function Library() {
               />
             </div>
             
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Input
-                placeholder="Paste article URL..."
-                value={addingUrl}
-                onChange={(e) => setAddingUrl(e.target.value)}
-                className="w-full"
-              />
-              <Button 
-                onClick={handleAddArticle}
-                disabled={isAddingArticle || !addingUrl.trim()}
-              >
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Add
-              </Button>
+            <div className="flex flex-col gap-2 w-full sm:w-auto">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Paste article URL..."
+                  value={addingUrl}
+                  onChange={(e) => setAddingUrl(e.target.value)}
+                  className="w-full"
+                />
+                <Button 
+                  onClick={handleAddArticle}
+                  disabled={isAddingArticle || !addingUrl.trim()}
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Add
+                </Button>
+              </div>
+              <p className="text-xs text-slate-500">Save articles by pasting URLs from any device</p>
             </div>
           </div>
         </div>
