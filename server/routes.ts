@@ -221,6 +221,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update reading progress
+  app.post("/api/articles/:id/progress", authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const articleId = parseInt(req.params.id);
+      const userId = req.body.userId;
+      const { progress, lastReadPosition } = req.body;
+      
+      const article = await storage.getArticle(articleId);
+      
+      if (!article) {
+        return res.status(404).json({ message: "Article not found" });
+      }
+      
+      if (article.userId !== userId) {
+        return res.status(403).json({ message: "You don't have permission to update this article" });
+      }
+      
+      const updatedArticle = await storage.updateArticle(articleId, {
+        readingProgress: progress,
+        lastReadPosition,
+        readAt: progress === 100 ? new Date() : article.readAt
+      });
+      
+      res.status(200).json(updatedArticle);
+    } catch (error) {
+      console.error("Update progress error:", error);
+      res.status(500).json({ message: "Failed to update reading progress" });
+    }
+  });
+
+  // Add highlight
+  app.post("/api/articles/:id/highlights", authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const articleId = parseInt(req.params.id);
+      const userId = req.body.userId;
+      const { highlight } = req.body;
+      
+      const article = await storage.getArticle(articleId);
+      
+      if (!article) {
+        return res.status(404).json({ message: "Article not found" });
+      }
+      
+      if (article.userId !== userId) {
+        return res.status(403).json({ message: "You don't have permission to update this article" });
+      }
+      
+      const highlights = article.highlights || [];
+      const updatedArticle = await storage.updateArticle(articleId, {
+        highlights: [...highlights, highlight]
+      });
+      
+      res.status(200).json(updatedArticle);
+    } catch (error) {
+      console.error("Add highlight error:", error);
+      res.status(500).json({ message: "Failed to add highlight" });
+    }
+  });
+
+  // Update folder
+  app.post("/api/articles/:id/folder", authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const articleId = parseInt(req.params.id);
+      const userId = req.body.userId;
+      const { folder } = req.body;
+      
+      const article = await storage.getArticle(articleId);
+      
+      if (!article) {
+        return res.status(404).json({ message: "Article not found" });
+      }
+      
+      if (article.userId !== userId) {
+        return res.status(403).json({ message: "You don't have permission to update this article" });
+      }
+      
+      const updatedArticle = await storage.updateArticle(articleId, { folder });
+      res.status(200).json(updatedArticle);
+    } catch (error) {
+      console.error("Update folder error:", error);
+      res.status(500).json({ message: "Failed to update folder" });
+    }
+  });
+
+  // Bulk update articles
+  app.post("/api/articles/bulk", authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const userId = req.body.userId;
+      const { articleIds, updates } = req.body;
+      
+      const results = await Promise.all(
+        articleIds.map(async (id: number) => {
+          const article = await storage.getArticle(id);
+          
+          if (!article || article.userId !== userId) {
+            return { id, success: false };
+          }
+          
+          await storage.updateArticle(id, updates);
+          return { id, success: true };
+        })
+      );
+      
+      res.status(200).json(results);
+    } catch (error) {
+      console.error("Bulk update error:", error);
+      res.status(500).json({ message: "Failed to perform bulk update" });
+    }
+  });
+
   app.patch("/api/articles/:id", authenticateToken, async (req: Request, res: Response) => {
     try {
       const articleId = parseInt(req.params.id);

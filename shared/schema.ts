@@ -26,6 +26,13 @@ export const articles = pgTable("articles", {
   isArchived: boolean("is_archived").default(false),
   labels: text("labels").array(),
   readingProgress: integer("reading_progress").default(0),
+  estimatedReadingTime: integer("estimated_reading_time"),
+  folder: text("folder").default("inbox"),
+  highlights: text("highlights").array(),
+  notes: text("notes"),
+  lastReadPosition: integer("last_read_position").default(0),
+  darkMode: boolean("dark_mode").default(false),
+  customCss: text("custom_css"),
 });
 
 export const labels = pgTable("labels", {
