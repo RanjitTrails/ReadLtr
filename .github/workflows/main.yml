@@ -8,10 +8,13 @@ on:
 
 # Add permissions block to ensure GitHub token has necessary access
 permissions:
-  contents: read
+  contents: write
   deployments: write
   statuses: write
   pull-requests: write
+  issues: write
+  discussions: write
+  checks: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

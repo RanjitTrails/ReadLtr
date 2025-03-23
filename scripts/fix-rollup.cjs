@@ -17,10 +17,12 @@ try {
   // Create directories if they don't exist
   if (!fs.existsSync(path.join(rootDir, 'node_modules', '@rollup'))) {
     fs.mkdirSync(path.join(rootDir, 'node_modules', '@rollup'), { recursive: true });
+    console.log('Created @rollup directory');
   }
   
   if (!fs.existsSync(modulePath)) {
     fs.mkdirSync(modulePath, { recursive: true });
+    console.log('Created rollup-linux-x64-gnu directory');
     
     // Create package.json
     fs.writeFileSync(
@@ -33,6 +35,7 @@ try {
         main: 'index.js',
       }, null, 2)
     );
+    console.log('Created package.json in rollup-linux-x64-gnu directory');
     
     // Create empty index.js
     fs.writeFileSync(
