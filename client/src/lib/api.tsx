@@ -59,19 +59,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const register = async (data: { username: string; email: string; password: string; name?: string }) => {
-    const response = await apiRequest("POST", "/api/auth/register", data);
-    const responseData = await response.json();
+    try {
+      const response = await apiRequest("POST", "/api/auth/register", data);
+      const responseData = await response.json();
 
-    if (!response.ok) {
-      throw new Error(responseData.message || "Registration failed"); // Improved error handling
+      if (!response.ok) {
+        throw new Error(responseData.message);
+      }
+
+      localStorage.setItem("token", responseData.token);
+      localStorage.setItem("user", JSON.stringify(responseData.user));
+      setUser(responseData.user);
+      queryClient.clear();
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
     }
-
-    localStorage.setItem("token", responseData.token);
-    localStorage.setItem("user", JSON.stringify(responseData.user));
-    setUser(responseData.user);
-
-    // Clear any existing queries
-    queryClient.clear();
   };
 
   const logout = () => {
