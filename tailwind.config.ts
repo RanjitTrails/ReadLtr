@@ -5,6 +5,17 @@ export default {
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      colors: {
+        omnivore: {
+          primary: "hsl(212 100% 47%)",
+          secondary: "hsl(217 91% 60%)",
+          accent: "hsl(220 14% 96%)",
+          text: "hsl(222 47% 11%)",
+          muted: "hsl(215 16% 47%)",
+          border: "hsl(214 32% 91%)",
+          background: "hsl(0 0% 100%)"
+        }
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
