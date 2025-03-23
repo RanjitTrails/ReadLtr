@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { IStorage } from './storage';
 import { User, InsertUser, Article, InsertArticle, Label, InsertLabel } from '@shared/schema';
+import type { Database } from './database.types';
 
 export class SupabaseStorage implements IStorage {
   // User methods
@@ -49,7 +50,7 @@ export class SupabaseStorage implements IStorage {
     
     if (error || !data) {
       console.error('Error creating user:', error);
-      throw new Error(error?.message || 'Failed to create user');
+      throw new Error(error ? (error.message || 'Failed to create user') : 'Failed to create user');
     }
     
     return this.mapToUser(data);
@@ -105,7 +106,7 @@ export class SupabaseStorage implements IStorage {
     
     if (error || !data) {
       console.error('Error creating article:', error);
-      throw new Error(error?.message || 'Failed to create article');
+      throw new Error(error ? (error.message || 'Failed to create article') : 'Failed to create article');
     }
     
     return this.mapToArticle(data);
@@ -188,7 +189,7 @@ export class SupabaseStorage implements IStorage {
     
     if (error || !data) {
       console.error('Error creating label:', error);
-      throw new Error(error?.message || 'Failed to create label');
+      throw new Error(error ? (error.message || 'Failed to create label') : 'Failed to create label');
     }
     
     return this.mapToLabel(data);
@@ -217,6 +218,20 @@ export class SupabaseStorage implements IStorage {
       .from('labels')
       .delete()
       .eq('id', id);
+    
+    return !error;
+  }
+  
+  // User settings
+  async updateUserSettings(userId: number, settings: { readingGoal?: number }): Promise<boolean> {
+    // Since we don't have a separate user_settings table in Supabase,
+    // we'll update the user directly with these settings
+    const { error } = await supabase
+      .from('users')
+      .update({
+        reading_goal: settings.readingGoal
+      })
+      .eq('id', userId);
     
     return !error;
   }

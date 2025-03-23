@@ -14,6 +14,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserSettings(userId: number, settings: { readingGoal?: number }): Promise<boolean>;
 
   // Article methods
   getArticle(id: number): Promise<Article | undefined>;
