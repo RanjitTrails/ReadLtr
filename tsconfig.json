@@ -17,6 +17,9 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
+    "esModuleInterop": true,
     "baseUrl": ".",
     "types": ["node", "vite/client"],
     "paths": {
