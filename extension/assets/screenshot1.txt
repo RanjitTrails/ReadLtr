@@ -1,0 +1,9 @@
+SCREENSHOT PLACEHOLDER
+
+Required screenshot for Chrome Web Store listing:
+- Size: 1280x800 pixels
+- Content: Show the extension popup in action saving an article
+- Include: Popup form with title, URL, content type dropdown, tags input, and notes field
+- Focus: Form fields filled out with example data about to be saved
+
+NOTE: Replace this text file with an actual PNG or JPG screenshot of the extension in use. 
