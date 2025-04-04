@@ -1,5 +1,7 @@
 import Shepherd from 'shepherd.js';
 import 'shepherd.js/dist/css/shepherd.css';
+import { supabase } from '@/lib/supabase';
+import { toast } from '@/components/ui/toast';
 
 // Create a new tour instance
 const tour = new Shepherd.Tour({
@@ -18,7 +20,7 @@ const tour = new Shepherd.Tour({
 export function configureTour() {
   // Clear any existing steps
   tour.steps.forEach(() => tour.removeStep(0));
-  
+
   // Add steps to the tour
   tour.addStep({
     id: 'welcome',
@@ -157,9 +159,59 @@ export function configureTour() {
   });
 }
 
-// Function to start the tour
-export function startTour() {
+/**
+ * Mark onboarding as complete in the user profile
+ */
+async function markOnboardingComplete(userId: string) {
+  if (!userId) return;
+
+  try {
+    await supabase
+      .from('profiles')
+      .update({
+        has_completed_tour: true,
+        onboarding_step: 100 // Use 100 to indicate fully completed
+      })
+      .eq('id', userId);
+
+    // Show completion notification
+    toast({
+      title: 'Onboarding Complete',
+      description: 'You\'ve completed the tour! Enjoy using ReadLtr.',
+      variant: 'success'
+    });
+  } catch (error) {
+    console.error('Failed to update onboarding status:', error);
+  }
+}
+
+/**
+ * Start the guided tour
+ * @param userId The current user's ID
+ */
+export function startTour(userId?: string) {
   configureTour();
+
+  // Set up tour completion handler
+  tour.on('complete', () => {
+    if (userId) {
+      markOnboardingComplete(userId);
+    }
+  });
+
+  // Set up tour cancellation handler
+  tour.on('cancel', () => {
+    if (userId) {
+      // Even if cancelled, mark as seen but not completed
+      supabase
+        .from('profiles')
+        .update({
+          onboarding_step: 50 // Use 50 to indicate partially completed
+        })
+        .eq('id', userId);
+    }
+  });
+
   tour.start();
 }
 

@@ -28,7 +28,8 @@ import {
   ChevronRight,
   Library,
   Bookmark,
-  BarChart
+  BarChart,
+  Lightbulb
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getAllTags } from "@/lib/articleService";
@@ -311,6 +312,19 @@ export default function Sidebar() {
             >
               <HelpCircle className={cn("h-5 w-5", collapsed ? "mx-auto" : "mr-3")} />
               {!collapsed && <span>Help</span>}
+            </a>
+          </Link>
+          <Link href="/onboarding">
+            <a
+              className={cn(
+                "flex items-center py-2 px-3 rounded-md text-sm font-medium transition-colors",
+                isActive("/onboarding")
+                  ? "bg-zinc-800 text-zinc-100"
+                  : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900"
+              )}
+            >
+              <Lightbulb className={cn("h-5 w-5", collapsed ? "mx-auto" : "mr-3")} />
+              {!collapsed && <span>Onboarding</span>}
             </a>
           </Link>
         </div>

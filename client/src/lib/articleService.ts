@@ -39,6 +39,7 @@ export interface ArticleFilters {
   };
   tags?: string[];
   contentType?: 'articles' | 'books' | 'emails' | 'pdfs' | 'tweets' | 'videos'; // New field for content type filtering
+  filter?: 'later' | 'highlights' | 'all'; // Filter for specific views
 }
 
 export interface SaveArticleParams {
@@ -148,6 +149,12 @@ export async function getArticles(filters: ArticleFilters = {}) {
     // Filter by content type if specified
     if (filters.contentType) {
       query = query.eq('content_type', filters.contentType);
+    }
+
+    // Apply special filters
+    if (filters.filter === 'later') {
+      // Read Later items: not read, not archived
+      query = query.eq('is_read', false).eq('is_archived', false);
     }
 
     // If tag filter is applied, we need to join with article_tags
@@ -575,5 +582,48 @@ export async function markAsRead(articleId: string) {
   } catch (error) {
     console.error("Error marking article as read:", error);
     throw error;
+  }
+}
+
+/**
+ * Get all highlights for the current user
+ */
+export async function getHighlights(): Promise<any[]> {
+  try {
+    // Get current user ID
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // For now, return mock data since we don't have a highlights table yet
+    // In a real implementation, this would query the highlights table
+    return [
+      {
+        id: '1',
+        text: 'The most important thing to remember is that you can learn anything if you put your mind to it.',
+        articleId: '1',
+        articleTitle: 'The Power of Learning',
+        createdAt: new Date().toISOString(),
+        color: 'yellow'
+      },
+      {
+        id: '2',
+        text: 'Reading is to the mind what exercise is to the body.',
+        articleId: '2',
+        articleTitle: 'Benefits of Reading',
+        createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+        color: 'blue'
+      },
+      {
+        id: '3',
+        text: 'The best way to predict the future is to create it.',
+        articleId: '3',
+        articleTitle: 'Innovation and Creativity',
+        createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+        color: 'green'
+      }
+    ];
+  } catch (error) {
+    console.error('Error fetching highlights:', error);
+    return [];
   }
 }

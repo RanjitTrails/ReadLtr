@@ -9,6 +9,7 @@ import { ZodError } from "zod";
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import fetch from "node-fetch";
+import { healthCheck } from "./health";
 
 // JWT Secret
 if (!process.env.JWT_SECRET) {
@@ -38,6 +39,9 @@ const authenticateToken = (req: Request, res: Response, next: any) => {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
   const httpServer = createServer(app);
+
+  // Health check endpoint
+  app.get("/api/health", healthCheck);
 
   // Article Parser Endpoint
   app.post("/api/parse-article", authenticateToken, async (req: Request, res: Response) => {

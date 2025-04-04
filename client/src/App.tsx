@@ -7,6 +7,7 @@ import { OfflineProvider } from "./contexts/OfflineContext";
 import React, { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase";
 import { addSampleArticles } from "./lib/sampleArticles";
+import { toast } from "@/components/ui/toast";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Login from "@/pages/login";
@@ -25,6 +26,8 @@ import ChromeExtension from "@/components/browser-extension/ChromeExtension";
 import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import WelcomeScreen from "@/components/onboarding/WelcomeScreen";
+import OnboardingDashboard from "@/components/onboarding/OnboardingDashboard";
+import Layout from "@/components/Layout";
 import "@/components/onboarding/onboarding.css";
 
 function Router() {
@@ -50,13 +53,33 @@ function Router() {
 
         // If user doesn't have sample articles, add them
         if (profile && !profile.has_sample_articles) {
-          await addSampleArticles(user.id);
+          try {
+            // Add sample articles
+            const addedCount = await addSampleArticles(user.id);
 
-          // Update profile to mark sample articles as added
-          await supabase
-            .from('profiles')
-            .update({ has_sample_articles: true })
-            .eq('id', user.id);
+            // Update profile to mark sample articles as added
+            await supabase
+              .from('profiles')
+              .update({
+                has_sample_articles: true,
+                onboarding_step: Math.max(profile.onboarding_step || 0, 5) // At least reached step 5
+              })
+              .eq('id', user.id);
+
+            // Only show notification if not showing welcome screen
+            // (welcome screen will show its own notification)
+            if (!showWelcome && addedCount > 0) {
+              setTimeout(() => {
+                toast({
+                  title: 'Sample Content Added',
+                  description: `We've added ${addedCount} sample articles to help you get started.`,
+                  variant: 'default'
+                });
+              }, 1500);
+            }
+          } catch (error) {
+            console.error('Failed to add sample articles:', error);
+          }
         }
 
         // Update last login time
@@ -83,6 +106,8 @@ function Router() {
         <Route path="/list" component={List} />
         <Route path="/favorites" component={Favorites} />
         <Route path="/archive" component={Archive} />
+        <Route path="/later" component={React.lazy(() => import('./pages/later'))} />
+        <Route path="/highlights" component={React.lazy(() => import('./pages/highlights'))} />
         <Route path="/tags" component={Tags} />
         <Route path="/tags/:tag" component={Tags} />
         <Route path="/article/:id" component={Article} />
@@ -90,6 +115,78 @@ function Router() {
         <Route path="/help" component={Help} />
         <Route path="/save" component={SaveArticle} />
         <Route path="/mobile" component={MobileAppPage} />
+
+        {/* List routes for different content types */}
+        <Route path="/list/articles">
+          {() => {
+            const ArticlesPage = React.lazy(() => import('./pages/list/articles'));
+            return (
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <ArticlesPage />
+              </React.Suspense>
+            );
+          }}
+        </Route>
+        <Route path="/list/books">
+          {() => {
+            const BooksPage = React.lazy(() => import('./pages/list/books'));
+            return (
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <BooksPage />
+              </React.Suspense>
+            );
+          }}
+        </Route>
+        <Route path="/list/emails">
+          {() => {
+            const EmailsPage = React.lazy(() => import('./pages/list/emails'));
+            return (
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <EmailsPage />
+              </React.Suspense>
+            );
+          }}
+        </Route>
+        <Route path="/list/pdfs">
+          {() => {
+            const PDFsPage = React.lazy(() => import('./pages/list/pdfs'));
+            return (
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <PDFsPage />
+              </React.Suspense>
+            );
+          }}
+        </Route>
+        <Route path="/list/tweets">
+          {() => {
+            const TweetsPage = React.lazy(() => import('./pages/list/tweets'));
+            return (
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <TweetsPage />
+              </React.Suspense>
+            );
+          }}
+        </Route>
+        <Route path="/list/videos">
+          {() => {
+            const VideosPage = React.lazy(() => import('./pages/list/videos'));
+            return (
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <VideosPage />
+              </React.Suspense>
+            );
+          }}
+        </Route>
+        <Route path="/list/tags">
+          {() => {
+            const TagsListPage = React.lazy(() => import('./pages/list/tags'));
+            return (
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <TagsListPage />
+              </React.Suspense>
+            );
+          }}
+        </Route>
 
         {/* Analytics routes */}
         <Route path="/analytics">
@@ -162,6 +259,16 @@ function Router() {
               <h1 className="text-2xl font-bold mb-6">Browser Extensions</h1>
               <ChromeExtension />
             </div>
+          )}
+        </Route>
+
+        <Route path="/onboarding">
+          {() => (
+            <Layout>
+              <div className="max-w-3xl mx-auto py-8">
+                <OnboardingDashboard />
+              </div>
+            </Layout>
           )}
         </Route>
         <Route component={NotFound} />

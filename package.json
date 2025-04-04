@@ -13,6 +13,9 @@
     "test:e2e:headless": "cypress run",
     "check": "tsc",
     "db:push": "drizzle-kit push",
+    "db:validate": "node ./scripts/validate-schema.js",
+    "db:generate": "drizzle-kit generate:pg",
+    "db:check": "npm run db:validate && npm run db:generate",
     "postinstall": "node ./scripts/fix-rollup.cjs"
   },
   "dependencies": {

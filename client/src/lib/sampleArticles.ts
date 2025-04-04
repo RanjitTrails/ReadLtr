@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { Article } from './articleService';
 
 // Sample articles to add for new users
 const sampleArticles = [
@@ -87,8 +86,9 @@ const sampleArticles = [
 /**
  * Adds sample articles to a new user's account
  * @param userId The ID of the user to add sample articles for
+ * @returns The number of articles added
  */
-export async function addSampleArticles(userId: string): Promise<void> {
+export async function addSampleArticles(userId: string): Promise<number> {
   try {
     // Check if user already has articles
     const { data: existingArticles, error: checkError } = await supabase
@@ -96,14 +96,14 @@ export async function addSampleArticles(userId: string): Promise<void> {
       .select('id')
       .eq('user_id', userId)
       .limit(1);
-    
+
     if (checkError) throw checkError;
-    
+
     // If user already has articles, don't add samples
     if (existingArticles && existingArticles.length > 0) {
-      return;
+      return 0; // No articles added
     }
-    
+
     // Prepare articles for insertion
     const articlesToInsert = sampleArticles.map(article => ({
       user_id: userId,
@@ -122,21 +122,21 @@ export async function addSampleArticles(userId: string): Promise<void> {
       domain: article.domain,
       content_type: article.content_type
     }));
-    
+
     // Insert articles
     const { data: insertedArticles, error: insertError } = await supabase
       .from('articles')
       .insert(articlesToInsert)
       .select('id');
-    
+
     if (insertError) throw insertError;
-    if (!insertedArticles) return;
-    
+    if (!insertedArticles) return 0;
+
     // Add tags for each article
     for (let i = 0; i < sampleArticles.length; i++) {
       const article = sampleArticles[i];
       const insertedArticle = insertedArticles[i];
-      
+
       if (article.tags && article.tags.length > 0) {
         // For each tag, check if it exists or create it
         for (const tagName of article.tags) {
@@ -147,9 +147,9 @@ export async function addSampleArticles(userId: string): Promise<void> {
             .eq('name', tagName)
             .eq('user_id', userId)
             .single();
-          
+
           let tagId: string;
-          
+
           if (existingTag) {
             tagId = existingTag.id;
           } else {
@@ -159,13 +159,13 @@ export async function addSampleArticles(userId: string): Promise<void> {
               .insert({ name: tagName, user_id: userId })
               .select('id')
               .single();
-            
+
             if (tagError) continue;
             if (!newTag) continue;
-            
+
             tagId = newTag.id;
           }
-          
+
           // Create article-tag relationship
           await supabase
             .from('article_tags')
@@ -176,8 +176,12 @@ export async function addSampleArticles(userId: string): Promise<void> {
         }
       }
     }
+
+    // Return the number of articles added
+    return insertedArticles.length;
   } catch (error) {
     console.error('Error adding sample articles:', error);
+    return 0; // Return 0 if there was an error
   }
 }
 
@@ -188,16 +192,16 @@ export async function addSampleArticles(userId: string): Promise<void> {
  */
 function estimateReadingTime(text: string): number {
   if (!text) return 1;
-  
+
   try {
     // Remove HTML tags to get just the text
     const textOnly = text.replace(/<[^>]*>/g, '');
-    
+
     // Average reading speed is about 200-250 words per minute
     const wordsPerMinute = 225;
     const wordCount = textOnly.trim().split(/\\s+/).length;
     const readingTime = Math.ceil(wordCount / wordsPerMinute);
-    
+
     // Return at least 1 minute
     return Math.max(1, readingTime);
   } catch (error) {
