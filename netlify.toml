@@ -30,7 +30,7 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer-when-downgrade"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://ui-avatars.com; connect-src 'self' https://*.supabase.co"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://ui-avatars.com https://*.unsplash.com https://*.githubusercontent.com https://*.googleusercontent.com https://*.ytimg.com https://*.twimg.com https://*.cdninstagram.com https://*.medium.com https://*.amazonaws.com; connect-src 'self' https://*.supabase.co https://api.readability.com; font-src 'self' data: https://fonts.gstatic.com; media-src 'self' https://*.youtube.com https://*.vimeo.com"
 
 # Cache static assets
 [[headers]]
@@ -46,4 +46,4 @@
 [[headers]]
   for = "*.woff2"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable" 
+    Cache-Control = "public, max-age=31536000, immutable"

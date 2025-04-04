@@ -1,38 +1,58 @@
 /**
  * Article Parser Utility
- * 
+ *
  * This module provides utilities for parsing and cleaning article content
  * extracted from web pages, optimizing it for readability.
  */
 
 import { ParsedArticle } from './articleService';
+import { Readability } from '@mozilla/readability';
+import { JSDOM } from 'jsdom';
+import { supabase } from './supabase';
 
 /**
  * Parses an article from a URL, extracting title, content, author, etc.
- * In a real application, this would use a proper parser or API.
+ * Uses Mozilla's Readability library to extract content from HTML.
  */
 export async function parseArticleFromUrl(url: string): Promise<ParsedArticle | null> {
   try {
-    // This is a mock implementation for demo purposes
-    // In a real app, you would use a service like Mercury, Readability, or your own parser
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Create a mock parsed article based on the URL
-    // In production, you would actually fetch and parse the content
-    const domain = new URL(url).hostname.replace('www.', '');
-    
-    // Generate some mock data based on the domain
-    let title = "Unnamed Article";
-    let excerpt = "";
-    let content = "";
-    let author = "";
-    let publishedDate = "";
-    let image_url = "";
-    let content_type: 'articles' | 'books' | 'emails' | 'pdfs' | 'tweets' | 'videos' = 'articles'; // Default content type
-    
+    // First try to use the server-side parser
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        const response = await fetch('/api/parse-article', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ url })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return {
+            title: data.title,
+            url: data.url,
+            excerpt: data.excerpt,
+            content: data.content,
+            author: data.author,
+            publishedDate: data.publishedDate,
+            image_url: data.image_url,
+            content_type: data.content_type as any,
+            domain: data.domain
+          };
+        }
+      }
+    } catch (serverError) {
+      console.warn('Server-side parsing failed, falling back to client-side:', serverError);
+      // Continue to client-side parsing
+    }
+
     // Determine content type based on URL pattern or domain
+    const domain = new URL(url).hostname.replace('www.', '');
+    let content_type: 'articles' | 'books' | 'emails' | 'pdfs' | 'tweets' | 'videos' = 'articles';
+
     if (url.includes('.pdf')) {
       content_type = 'pdfs';
     } else if (domain.includes('twitter.com') || domain.includes('x.com')) {
@@ -48,152 +68,179 @@ export async function parseArticleFromUrl(url: string): Promise<ParsedArticle | 
     } else {
       content_type = 'articles'; // Default for most web content
     }
-    
-    if (domain.includes('medium.com')) {
-      title = "How to Build Better Web Applications in 2024";
-      excerpt = "Modern web development requires a new approach. Here's how to stay ahead of the curve.";
-      author = "Sarah Johnson";
-      publishedDate = "2024-05-15";
-      image_url = "https://images.unsplash.com/photo-1498050108023-c5249f4df085";
-      content = `
-        <h1>How to Build Better Web Applications in 2024</h1>
-        <p>The web development landscape continues to evolve at a rapid pace. Frameworks, tools, and best practices that were cutting-edge just a few years ago may now be considered outdated or inefficient.</p>
-        <h2>1. Focus on Performance</h2>
-        <p>Performance isn't just about speed—it's about user experience. Studies consistently show that users abandon sites that take more than a few seconds to load.</p>
-        <p>Modern approaches like:</p>
-        <ul>
-          <li>Code splitting and lazy loading</li>
-          <li>Optimizing the critical rendering path</li>
-          <li>Using modern image formats and compression</li>
-        </ul>
-        <p>These techniques can dramatically improve perceived performance.</p>
-        <h2>2. Embrace Server Components</h2>
-        <p>Frameworks like Next.js and similar meta-frameworks are moving toward server components, which render on the server but can hydrate on the client when needed.</p>
-        <h2>3. Prioritize Accessibility</h2>
-        <p>Building accessible applications isn't just the right thing to do—it's increasingly becoming a legal requirement in many jurisdictions.</p>
-        <h2>4. Consider Edge Computing</h2>
-        <p>Edge computing moves computation closer to the user, reducing latency and improving performance.</p>
-        <h2>5. Design for Mobile-First</h2>
-        <p>Mobile traffic continues to grow, and designing for mobile first ensures your application works well on all devices.</p>
-        <p>By adopting these approaches, you can build web applications that are not only modern and feature-rich but also performant, accessible, and future-proof.</p>
-      `;
-    } else if (domain.includes('dev.to')) {
-      title = "Understanding TypeScript Generics: A Practical Guide";
-      excerpt = "TypeScript generics can be confusing at first, but they're incredibly powerful once you understand them.";
-      author = "Michael Chen";
-      publishedDate = "2024-04-22";
-      image_url = "https://images.unsplash.com/photo-1587620962725-abab7fe55159";
-      content = `
-        <h1>Understanding TypeScript Generics: A Practical Guide</h1>
-        <p>TypeScript generics provide a way to create reusable components that can work with a variety of types rather than a single one. This is extremely powerful for building flexible, type-safe abstractions.</p>
-        <h2>Why Use Generics?</h2>
-        <p>Without generics, we'd have to either:</p>
-        <ul>
-          <li>Create separate functions for each type</li>
-          <li>Use the 'any' type, which loses type safety</li>
-        </ul>
-        <p>Generics give us the best of both worlds: flexibility with type safety.</p>
-        <h2>Basic Generic Syntax</h2>
-        <pre><code>function identity&lt;T&gt;(arg: T): T {
-  return arg;
-}</code></pre>
-        <p>This function can work with any type, and TypeScript ensures that the return type matches the input type.</p>
-        <h2>Generic Constraints</h2>
-        <p>Sometimes you want to restrict what types can be used with your generic. You can do this with constraints:</p>
-        <pre><code>interface Lengthwise {
-  length: number;
-}
 
-function logLength&lt;T extends Lengthwise&gt;(arg: T): T {
-  console.log(arg.length);
-  return arg;
-}</code></pre>
-        <h2>Practical Examples</h2>
-        <p>Let's look at some real-world uses of generics:</p>
-        <h3>1. API Response Handling</h3>
-        <pre><code>async function fetchData&lt;T&gt;(url: string): Promise&lt;T&gt; {
-  const response = await fetch(url);
-  return response.json();
-}</code></pre>
-        <p>By mastering generics, you'll be able to write more reusable, type-safe code in TypeScript.</p>
-      `;
-    } else if (domain.includes('github.com')) {
-      title = "10 GitHub Actions Workflows Every Developer Should Know";
-      excerpt = "Automate your development workflow with these essential GitHub Actions configurations.";
-      author = "Taylor Rivera";
-      publishedDate = "2024-03-10";
-      image_url = "https://images.unsplash.com/photo-1618401471353-b98afee0b2eb";
-      content = `
-        <h1>10 GitHub Actions Workflows Every Developer Should Know</h1>
-        <p>GitHub Actions has revolutionized CI/CD by making it more accessible and deeply integrated with your repository. Here are 10 workflows that can improve your development process.</p>
-        <h2>1. Basic CI Workflow</h2>
-        <pre><code>name: CI
+    // For non-article content types, we might need specialized parsers
+    // For now, we'll focus on articles and use a simplified approach
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    // Fetch the page content
+    const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '16'
-    - name: Install dependencies
-      run: npm ci
-    - name: Run tests
-      run: npm test</code></pre>
-        <h2>2. Automated Releases</h2>
-        <p>Create automatic releases when you tag your repository.</p>
-        <h2>3. Dependency Updates</h2>
-        <p>Use Dependabot with GitHub Actions to keep your dependencies up to date.</p>
-        <h2>4. Code Quality Checks</h2>
-        <p>Integrate linters and code quality tools into your workflow.</p>
-        <h2>5. Automated Deployments</h2>
-        <p>Deploy your application automatically when changes are pushed to specific branches.</p>
-        <p>By implementing these workflows, you can save time, improve code quality, and make your development process more efficient.</p>
-      `;
-    } else {
-      // Default mock article for any other domain
-      title = `Article from ${domain}`;
-      excerpt = "This is a sample article extracted from the provided URL.";
-      content = "<p>This is a placeholder for the article content.</p>";
-      image_url = "https://images.unsplash.com/photo-1516259762381-22954d7d3ad2";
+    if (!response.ok) {
+      throw new Error(`Failed to fetch article: ${response.statusText}`);
     }
-    
+
+    const data = await response.json();
+    const html = data.contents;
+
+    // Create a DOM parser to work with the HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // Extract title
+    let title = '';
+    const titleElement = doc.querySelector('title');
+    if (titleElement) {
+      title = titleElement.textContent || '';
+    }
+
+    // Try to get a better title from OG tags
+    const ogTitle = doc.querySelector('meta[property="og:title"]');
+    if (ogTitle) {
+      title = ogTitle.getAttribute('content') || title;
+    }
+
+    // Extract author
+    let author = '';
+    const authorMeta = doc.querySelector('meta[name="author"], meta[property="article:author"]');
+    if (authorMeta) {
+      author = authorMeta.getAttribute('content') || '';
+    }
+
+    // Extract published date
+    let publishedDate = '';
+    const dateMeta = doc.querySelector('meta[name="date"], meta[property="article:published_time"]');
+    if (dateMeta) {
+      publishedDate = dateMeta.getAttribute('content') || '';
+    }
+
+    // Extract image
+    let image_url = '';
+    const ogImage = doc.querySelector('meta[property="og:image"]');
+    if (ogImage) {
+      image_url = ogImage.getAttribute('content') || '';
+    }
+
+    // Extract description/excerpt
+    let excerpt = '';
+    const descriptionMeta = doc.querySelector('meta[name="description"], meta[property="og:description"]');
+    if (descriptionMeta) {
+      excerpt = descriptionMeta.getAttribute('content') || '';
+    }
+
+    // Try to extract the main content
+    let content = '';
+    const article = doc.querySelector('article');
+    if (article) {
+      content = article.innerHTML;
+    } else {
+      // Try to find the main content area
+      const main = doc.querySelector('main');
+      if (main) {
+        content = main.innerHTML;
+      } else {
+        // Just get the body content as a last resort
+        content = doc.body.innerHTML;
+      }
+    }
+
     return {
-      title,
+      title: title || 'Untitled Article',
       url,
       excerpt,
       content,
       author,
       publishedDate,
       image_url,
-      content_type
+      content_type,
+      domain
     };
   } catch (error) {
     console.error('Error parsing article:', error);
-    return null;
+
+    // Fallback to a very basic parser if everything else fails
+    try {
+      return {
+        title: `Article from ${new URL(url).hostname}`,
+        url,
+        excerpt: "Content could not be extracted automatically.",
+        content: `<p>The article content could not be extracted automatically. <a href="${url}" target="_blank" rel="noopener noreferrer">View the original article</a>.</p>`,
+        author: '',
+        publishedDate: '',
+        image_url: '',
+        content_type: 'articles',
+        domain: new URL(url).hostname.replace('www.', '')
+      };
+    } catch (fallbackError) {
+      console.error('Fallback parser also failed:', fallbackError);
+      return null;
+    }
   }
 }
+
+
 
 /**
  * Formats article content for display
  * Cleans up common HTML issues and improves readability
  */
 export function formatArticleContent(content: string): string {
-  // In a real implementation, this would:
-  // - Remove unnecessary elements (ads, nav, etc.)
-  // - Fix image paths
-  // - Improve typography
-  // - Add appropriate styling
-  
-  return content;
+  if (!content) return '';
+
+  try {
+    // Create a DOM parser to work with the HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+
+    // Remove unwanted elements
+    const unwantedSelectors = [
+      'script', 'style', 'iframe', 'form', 'button', 'input', 'nav', 'footer',
+      '.ad', '.ads', '.advertisement', '.social-share', '.related-articles',
+      '.comments', '.popup', '.modal', '.newsletter', '.subscription'
+    ];
+
+    unwantedSelectors.forEach(selector => {
+      doc.querySelectorAll(selector).forEach(el => {
+        el.remove();
+      });
+    });
+
+    // Fix relative image paths
+    doc.querySelectorAll('img').forEach(img => {
+      const src = img.getAttribute('src');
+      if (src && src.startsWith('/')) {
+        try {
+          // Try to convert to absolute URL if it's a relative path
+          const baseUrl = window.location.origin;
+          img.setAttribute('src', baseUrl + src);
+        } catch (e) {
+          // If conversion fails, leave as is
+        }
+      }
+
+      // Add loading="lazy" for better performance
+      img.setAttribute('loading', 'lazy');
+
+      // Add alt text if missing
+      if (!img.hasAttribute('alt')) {
+        img.setAttribute('alt', 'Article image');
+      }
+    });
+
+    // Add target="_blank" to external links
+    doc.querySelectorAll('a').forEach(link => {
+      const href = link.getAttribute('href');
+      if (href && (href.startsWith('http') || href.startsWith('https'))) {
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+
+    // Return the cleaned HTML
+    return doc.body.innerHTML;
+  } catch (error) {
+    console.error('Error formatting article content:', error);
+    return content; // Return original content if formatting fails
+  }
 }
 
 /**
@@ -202,20 +249,69 @@ export function formatArticleContent(content: string): string {
  * @returns estimated reading time in minutes
  */
 export function estimateReadingTime(text: string): number {
-  // Average reading speed is about 200-250 words per minute
-  const wordsPerMinute = 225;
-  const wordCount = text.trim().split(/\s+/).length;
-  const readingTime = Math.ceil(wordCount / wordsPerMinute);
-  
-  // Return at least 1 minute
-  return Math.max(1, readingTime);
+  if (!text) return 1;
+
+  try {
+    // Remove HTML tags to get just the text
+    const textOnly = text.replace(/<[^>]*>/g, '');
+
+    // Average reading speed is about 200-250 words per minute
+    const wordsPerMinute = 225;
+    const wordCount = textOnly.trim().split(/\s+/).length;
+    const readingTime = Math.ceil(wordCount / wordsPerMinute);
+
+    // Return at least 1 minute
+    return Math.max(1, readingTime);
+  } catch (error) {
+    console.error('Error estimating reading time:', error);
+    return 1; // Default to 1 minute if estimation fails
+  }
 }
 
 /**
  * Extracts keywords/topics from article content
+ * Uses a basic frequency-based approach
  */
 export function extractKeywords(content: string): string[] {
-  // In a real implementation, this would use NLP techniques
-  // For now, return mock data
-  return ["react", "typescript", "web development"];
-} 
+  if (!content) return [];
+
+  try {
+    // Remove HTML tags
+    const textOnly = content.replace(/<[^>]*>/g, '');
+
+    // Convert to lowercase and remove punctuation
+    const cleanText = textOnly.toLowerCase().replace(/[^\w\s]/g, '');
+
+    // Split into words
+    const words = cleanText.split(/\s+/);
+
+    // Common English stop words to filter out
+    const stopWords = new Set([
+      'a', 'an', 'the', 'and', 'or', 'but', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+      'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'against', 'between', 'into', 'through',
+      'during', 'before', 'after', 'above', 'below', 'from', 'up', 'down', 'of', 'off', 'over', 'under',
+      'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any',
+      'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own',
+      'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just', 'should', 'now'
+    ]);
+
+    // Count word frequencies (excluding stop words and short words)
+    const wordFrequency: Record<string, number> = {};
+    words.forEach(word => {
+      if (word.length > 3 && !stopWords.has(word)) {
+        wordFrequency[word] = (wordFrequency[word] || 0) + 1;
+      }
+    });
+
+    // Convert to array and sort by frequency
+    const sortedWords = Object.entries(wordFrequency)
+      .sort((a, b) => b[1] - a[1])
+      .map(entry => entry[0]);
+
+    // Return top 5 keywords
+    return sortedWords.slice(0, 5);
+  } catch (error) {
+    console.error('Error extracting keywords:', error);
+    return []; // Return empty array if extraction fails
+  }
+}
