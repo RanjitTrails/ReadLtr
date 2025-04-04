@@ -1,0 +1,7 @@
+-- Add onboarding fields to profiles table
+ALTER TABLE public.profiles
+ADD COLUMN IF NOT EXISTS has_seen_welcome BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS has_completed_tour BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS has_sample_articles BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS onboarding_step INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE;

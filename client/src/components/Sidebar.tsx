@@ -26,7 +26,9 @@ import {
   Rss,
   ChevronDown,
   ChevronRight,
-  Library
+  Library,
+  Bookmark,
+  BarChart
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getAllTags } from "@/lib/articleService";
@@ -46,7 +48,7 @@ export default function Sidebar() {
   const [showFilters, setShowFilters] = useState(false);
   const [showLibrary, setShowLibrary] = useState(true);
   const [showFeed, setShowFeed] = useState(false);
-  
+
   // Fetch all tags
   const { data: tags = [] } = useQuery({
     queryKey: ["tags"],
@@ -60,6 +62,8 @@ export default function Sidebar() {
     { href: "/archive", label: "Archive", icon: Archive },
     { href: "/later", label: "Read Later", icon: Clock },
     { href: "/highlights", label: "Highlights", icon: BookMarked },
+    { href: "/collections", label: "Collections", icon: Bookmark },
+    { href: "/analytics", label: "Analytics", icon: BarChart },
   ];
 
   const libraryItems: NavItem[] = [
@@ -79,9 +83,9 @@ export default function Sidebar() {
   };
 
   return (
-    <aside 
+    <aside
       className={cn(
-        "h-screen flex flex-col bg-zinc-950 text-zinc-200 border-r border-zinc-800 transition-all duration-300",
+        "h-screen flex flex-col bg-zinc-950 text-zinc-200 border-r border-zinc-800 transition-all duration-300 sidebar",
         collapsed ? "w-[60px]" : "w-[250px]"
       )}
     >
@@ -101,18 +105,18 @@ export default function Sidebar() {
             </a>
           </Link>
         )}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => setCollapsed(!collapsed)} 
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setCollapsed(!collapsed)}
           className="text-zinc-400 hover:text-white"
         >
           <PanelLeft className="h-4 w-4" />
         </Button>
       </div>
-      
+
       {/* Search */}
-      <div className="px-3 mt-2 mb-4">
+      <div className="px-3 mt-2 mb-4 search-bar">
         {!collapsed ? (
           <div className="flex items-center bg-zinc-900 rounded-md px-3 py-2 text-zinc-400">
             <Search className="h-4 w-4 mr-2" />
@@ -128,9 +132,9 @@ export default function Sidebar() {
           </Button>
         )}
       </div>
-      
+
       {/* Add new article button */}
-      <div className="px-3 mb-6">
+      <div className="px-3 mb-6 save-button">
         {!collapsed ? (
           <Link href="/save">
             <a className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md flex items-center justify-center">
@@ -171,7 +175,7 @@ export default function Sidebar() {
             </Link>
           ))}
         </div>
-        
+
         {/* Library Section */}
         <div className="mt-6">
           {!collapsed ? (
@@ -190,7 +194,7 @@ export default function Sidebar() {
               <Library className="h-5 w-5 text-zinc-400" />
             </div>
           )}
-          
+
           {!collapsed && showLibrary && (
             <div className="mt-1 ml-2 space-y-1">
               {libraryItems.map((item) => (
@@ -209,7 +213,7 @@ export default function Sidebar() {
             </div>
           )}
         </div>
-        
+
         {/* Feed Section */}
         <div className="mt-2">
           {!collapsed ? (
@@ -228,7 +232,7 @@ export default function Sidebar() {
               <Rss className="h-5 w-5 text-zinc-400" />
             </div>
           )}
-          
+
           {!collapsed && showFeed && (
             <div className="mt-1 ml-2 space-y-1">
               <Link href="/feeds/manage">
@@ -240,7 +244,7 @@ export default function Sidebar() {
             </div>
           )}
         </div>
-        
+
         {/* Filters section */}
         {!collapsed && (
           <div className="mt-6">
@@ -254,7 +258,7 @@ export default function Sidebar() {
               </div>
               <span>{showFilters ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</span>
             </button>
-            
+
             {showFilters && (
               <div className="mt-2 ml-7 space-y-1">
                 <a
@@ -286,7 +290,7 @@ export default function Sidebar() {
           <Link href="/settings">
             <a
               className={cn(
-                "flex items-center py-2 px-3 rounded-md text-sm font-medium transition-colors",
+                "flex items-center py-2 px-3 rounded-md text-sm font-medium transition-colors settings-button",
                 isActive("/settings")
                   ? "bg-zinc-800 text-zinc-100"
                   : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900"
@@ -313,4 +317,4 @@ export default function Sidebar() {
       </div>
     </aside>
   );
-} 
+}

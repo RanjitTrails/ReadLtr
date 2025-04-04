@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're Offline - ReadLtr</title>
+  <link rel="stylesheet" href="/assets/offline.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #121212;
+      color: #e4e4e4;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      text-align: center;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 2rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    
+    p {
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      color: #a0a0a0;
+    }
+    
+    .offline-image {
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 2rem;
+    }
+    
+    .button {
+      display: inline-block;
+      background-color: #3b82f6;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.375rem;
+      text-decoration: none;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    
+    .button:hover {
+      background-color: #2563eb;
+    }
+    
+    .saved-articles {
+      margin-top: 3rem;
+      border-top: 1px solid #333;
+      padding-top: 2rem;
+    }
+    
+    .article-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      text-align: left;
+    }
+    
+    .article-item {
+      padding: 1rem;
+      border: 1px solid #333;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      background-color: #1e1e1e;
+    }
+    
+    .article-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .article-source {
+      font-size: 0.875rem;
+      color: #888;
+    }
+    
+    .no-articles {
+      color: #888;
+      font-style: italic;
+    }
+    
+    footer {
+      padding: 1rem;
+      background-color: #1a1a1a;
+      font-size: 0.875rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <svg class="offline-image" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a0a0a0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1 1l22 22"></path>
+      <path d="M16.72 16.72A10.5 10.5 0 1 1 7.28 7.28"></path>
+      <path d="M12 18a6 6 0 0 0-6-6"></path>
+      <path d="M12 12v.01"></path>
+    </svg>
+    
+    <h1>You're Offline</h1>
+    <p>It looks like you've lost your internet connection. Don't worry, you can still access your saved articles.</p>
+    
+    <a href="/" class="button">Try Again</a>
+    
+    <div class="saved-articles">
+      <h2>Your Saved Articles</h2>
+      <div id="offline-articles">
+        <p class="no-articles">Loading saved articles...</p>
+      </div>
+    </div>
+  </div>
+  
+  <footer>
+    ReadLtr &copy; 2023 - Your personal reading companion
+  </footer>
+
+  <script>
+    // Check if IndexedDB is available
+    if ('indexedDB' in window) {
+      const request = indexedDB.open('ReadLtrOfflineDB', 1);
+      
+      request.onerror = function() {
+        document.getElementById('offline-articles').innerHTML = 
+          '<p class="no-articles">Unable to access saved articles.</p>';
+      };
+      
+      request.onsuccess = function() {
+        const db = request.result;
+        const transaction = db.transaction('cachedArticles', 'readonly');
+        const store = transaction.objectStore('cachedArticles');
+        const getAllRequest = store.getAll();
+        
+        getAllRequest.onsuccess = function() {
+          const articles = getAllRequest.result;
+          
+          if (articles && articles.length > 0) {
+            let html = '<ul class="article-list">';
+            
+            articles.forEach(article => {
+              html += `
+                <li class="article-item">
+                  <div class="article-title">${article.title}</div>
+                  <div class="article-source">${article.domain || 'Unknown source'}</div>
+                </li>
+              `;
+            });
+            
+            html += '</ul>';
+            document.getElementById('offline-articles').innerHTML = html;
+          } else {
+            document.getElementById('offline-articles').innerHTML = 
+              '<p class="no-articles">No saved articles available offline.</p>';
+          }
+        };
+        
+        getAllRequest.onerror = function() {
+          document.getElementById('offline-articles').innerHTML = 
+            '<p class="no-articles">Error loading saved articles.</p>';
+        };
+      };
+    } else {
+      document.getElementById('offline-articles').innerHTML = 
+        '<p class="no-articles">Your browser does not support offline storage.</p>';
+    }
+  </script>
+</body>
+</html>
