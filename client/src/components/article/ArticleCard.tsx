@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Bookmark, Archive, Calendar, User, Globe } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/toast";
 import { type Article } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 
@@ -13,12 +13,11 @@ interface ArticleCardProps {
 }
 
 export default function ArticleCard({ article }: ArticleCardProps) {
-  const { toast } = useToast();
-  
-  const formattedDate = article.savedAt 
-    ? formatDistanceToNow(new Date(article.savedAt), { addSuffix: true }) 
+
+  const formattedDate = article.savedAt
+    ? formatDistanceToNow(new Date(article.savedAt), { addSuffix: true })
     : "Recently";
-  
+
   const archiveMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest("PATCH", `/api/articles/${article.id}`, {
@@ -40,13 +39,13 @@ export default function ArticleCard({ article }: ArticleCardProps) {
       });
     },
   });
-  
+
   const handleArchive = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     archiveMutation.mutate();
   };
-  
+
   // Extract hostname from URL for display
   const getHostname = (url: string) => {
     try {
@@ -56,7 +55,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
       return url;
     }
   };
-  
+
   return (
     <Link href={`/article/${article.id}`}>
       <a className="block h-full">
@@ -67,13 +66,13 @@ export default function ArticleCard({ article }: ArticleCardProps) {
                 {article.title}
               </h3>
             </div>
-            
+
             {article.description && (
               <p className="text-sm text-slate-600 line-clamp-3 mb-4">
                 {article.description}
               </p>
             )}
-            
+
             <div className="flex flex-wrap gap-y-2 text-xs text-slate-500 mt-auto">
               {article.author && (
                 <div className="flex items-center mr-4">
@@ -81,26 +80,26 @@ export default function ArticleCard({ article }: ArticleCardProps) {
                   <span className="line-clamp-1">{article.author}</span>
                 </div>
               )}
-              
+
               <div className="flex items-center mr-4">
                 <Calendar className="h-3 w-3 mr-1" />
                 <span>{formattedDate}</span>
               </div>
-              
+
               <div className="flex items-center">
                 <Globe className="h-3 w-3 mr-1" />
                 <span className="line-clamp-1">{getHostname(article.url)}</span>
               </div>
             </div>
           </CardContent>
-          
+
           <CardFooter className="pt-2 pb-4 px-6 border-t flex justify-between">
             <div className="flex items-center text-xs text-slate-500">
               {article.readingProgress > 0 ? (
                 <div className="flex items-center">
                   <div className="h-2 w-16 bg-slate-200 rounded-full mr-2">
-                    <div 
-                      className="h-2 bg-primary rounded-full" 
+                    <div
+                      className="h-2 bg-primary rounded-full"
                       style={{ width: `${article.readingProgress}%` }}
                     />
                   </div>
@@ -110,10 +109,10 @@ export default function ArticleCard({ article }: ArticleCardProps) {
                 <span>Not started</span>
               )}
             </div>
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
+
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleArchive}
               disabled={archiveMutation.isPending}
               className="h-8 px-2"

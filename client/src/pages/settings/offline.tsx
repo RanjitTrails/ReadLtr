@@ -1,29 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
 import { toast } from '@/components/ui/toast';
-import {
-  Wifi,
-  WifiOff,
-  Download,
-  Trash2,
-  RefreshCw,
-  HardDrive,
-  Clock,
-  FileText,
-  Loader2
-} from 'lucide-react';
 import { useOffline } from '@/contexts/OfflineContext';
 import {
   getAllCachedArticles,
   clearOfflineData,
   getPendingArticles
 } from '@/lib/offlineStorage';
-import { getArticles } from '@/lib/articleService';
+
+// Import our component panels
+import OfflineSettingsPanel from '@/components/offline/OfflineSettingsPanel';
+import StorageUsagePanel from '@/components/offline/StorageUsagePanel';
+import CachedArticlesPanel from '@/components/offline/CachedArticlesPanel';
+import PendingChangesPanel from '@/components/offline/PendingChangesPanel';
 
 /**
  * Offline Settings Page
@@ -246,303 +235,46 @@ export default function OfflineSettings() {
 
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Offline Access</CardTitle>
-              <CardDescription>
-                Configure how ReadLtr behaves when you're offline.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between space-x-2">
-                <Label htmlFor="enable-offline" className="flex flex-col space-y-1">
-                  <span>Enable offline mode</span>
-                  <span className="font-normal text-xs text-zinc-500">
-                    Allow reading articles when you're offline
-                  </span>
-                </Label>
-                <Switch
-                  id="enable-offline"
-                  checked={enableOfflineMode}
-                  onCheckedChange={setEnableOfflineMode}
-                />
-              </div>
+          <OfflineSettingsPanel
+            enableOfflineMode={enableOfflineMode}
+            setEnableOfflineMode={setEnableOfflineMode}
+            autoDownloadArticles={autoDownloadArticles}
+            setAutoDownloadArticles={setAutoDownloadArticles}
+            maxOfflineArticles={maxOfflineArticles}
+            setMaxOfflineArticles={setMaxOfflineArticles}
+            onClearCache={clearOfflineCache}
+            isLoading={isLoading}
+            isClearing={isClearing}
+          />
 
-              <div className="flex items-center justify-between space-x-2">
-                <Label htmlFor="auto-download" className="flex flex-col space-y-1">
-                  <span>Auto-download articles</span>
-                  <span className="font-normal text-xs text-zinc-500">
-                    Automatically download articles for offline reading
-                  </span>
-                </Label>
-                <Switch
-                  id="auto-download"
-                  checked={autoDownloadArticles}
-                  onCheckedChange={setAutoDownloadArticles}
-                  disabled={!enableOfflineMode}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="max-articles">Maximum articles to cache ({maxOfflineArticles})</Label>
-                <input
-                  id="max-articles"
-                  type="range"
-                  min="10"
-                  max="200"
-                  step="10"
-                  value={maxOfflineArticles}
-                  onChange={(e) => setMaxOfflineArticles(parseInt(e.target.value))}
-                  disabled={!enableOfflineMode}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-zinc-500">
-                  <span>10</span>
-                  <span>100</span>
-                  <span>200</span>
-                </div>
-              </div>
-
-              <div className="pt-4 flex flex-col gap-4">
-                <Button
-                  onClick={downloadArticlesForOffline}
-                  disabled={isLoading || !enableOfflineMode || !online}
-                  className="w-full"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Downloading...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Articles for Offline Use
-                    </>
-                  )}
-                </Button>
-
-                <Button
-                  variant="destructive"
-                  onClick={clearOfflineCache}
-                  disabled={isClearing || cachedArticles.length === 0}
-                  className="w-full"
-                >
-                  {isClearing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Clearing...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Clear Offline Cache
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Storage Usage</CardTitle>
-              <CardDescription>
-                View how much storage is being used by offline content.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Used: {storageUsage.used} MB</span>
-                  <span>Total: {storageUsage.total} MB</span>
-                </div>
-                <Progress value={storageUsage.percentage} className="h-2" />
-                <p className="text-xs text-zinc-500">
-                  {storageUsage.percentage}% of available storage used
-                </p>
-              </div>
-
-              <div className="pt-2 grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-blue-900/20 rounded-full">
-                    <FileText className="h-4 w-4 text-blue-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{cachedArticles.length}</p>
-                    <p className="text-xs text-zinc-500">Cached Articles</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-amber-900/20 rounded-full">
-                    <Clock className="h-4 w-4 text-amber-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{pendingArticles.length}</p>
-                    <p className="text-xs text-zinc-500">Pending Changes</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StorageUsagePanel
+            storageUsage={storageUsage}
+            cachedArticlesCount={cachedArticles.length}
+            pendingChangesCount={pendingArticles.length}
+          />
         </TabsContent>
 
         {/* Cached Articles Tab */}
         <TabsContent value="cached" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Cached Articles</CardTitle>
-              <CardDescription>
-                Articles available for offline reading.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {cachedArticles.length === 0 ? (
-                <div className="text-center py-8">
-                  <HardDrive className="mx-auto h-12 w-12 text-zinc-500 mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No Cached Articles</h3>
-                  <p className="text-zinc-500 mb-4">
-                    You don't have any articles cached for offline reading.
-                  </p>
-                  <Button
-                    onClick={downloadArticlesForOffline}
-                    disabled={isLoading || !enableOfflineMode || !online}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Articles
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm text-zinc-500">
-                      {cachedArticles.length} articles cached
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={clearOfflineCache}
-                      disabled={isClearing}
-                    >
-                      {isClearing ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-
-                  <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
-                    {cachedArticles.map((article) => (
-                      <div
-                        key={article.id}
-                        className="flex items-center justify-between p-3 bg-zinc-900 rounded-md border border-zinc-800"
-                      >
-                        <div className="truncate flex-1">
-                          <p className="font-medium truncate">{article.title}</p>
-                          <p className="text-xs text-zinc-500 truncate">
-                            {article.domain || new URL(article.url).hostname}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2 ml-4">
-                          {article.read_time && (
-                            <span className="text-xs bg-zinc-800 px-2 py-1 rounded-full">
-                              {article.read_time} min
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <CachedArticlesPanel
+            cachedArticles={cachedArticles}
+            onDownloadArticles={downloadArticlesForOffline}
+            onClearCache={clearOfflineCache}
+            isLoading={isLoading}
+            isClearing={isClearing}
+            enableOfflineMode={enableOfflineMode}
+            online={online}
+          />
         </TabsContent>
 
         {/* Pending Changes Tab */}
         <TabsContent value="pending" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Changes</CardTitle>
-              <CardDescription>
-                Changes made while offline that will sync when you're back online.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {pendingArticles.length === 0 ? (
-                <div className="text-center py-8">
-                  <WifiOff className="mx-auto h-12 w-12 text-zinc-500 mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No Pending Changes</h3>
-                  <p className="text-zinc-500">
-                    All your changes have been synchronized with the server.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm text-zinc-500">
-                      {pendingArticles.length} pending changes
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSyncChanges}
-                      disabled={isSyncing || !online}
-                    >
-                      {isSyncing ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <RefreshCw className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-
-                  <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
-                    {pendingArticles.map((article) => (
-                      <div
-                        key={article.id}
-                        className="flex items-center justify-between p-3 bg-zinc-900 rounded-md border border-zinc-800"
-                      >
-                        <div className="truncate flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium truncate">{article.title}</p>
-                            <span className="text-xs bg-amber-900/30 text-amber-300 px-2 py-0.5 rounded-full">
-                              Pending
-                            </span>
-                          </div>
-                          <p className="text-xs text-zinc-500 truncate">
-                            {article.domain || new URL(article.url).hostname}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="pt-2">
-                    <Button
-                      onClick={handleSyncChanges}
-                      disabled={isSyncing || !online}
-                      className="w-full"
-                    >
-                      {isSyncing ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Syncing...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          Sync Changes Now
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <PendingChangesPanel
+            pendingArticles={pendingArticles}
+            onSyncChanges={handleSyncChanges}
+            isSyncing={isSyncing}
+            online={online}
+          />
         </TabsContent>
       </Tabs>
     </div>

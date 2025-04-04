@@ -1,6 +1,10 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { initializeToast, ToastProps } from './toast';
 
+/**
+ * Toast interface for internal use
+ */
 interface Toast {
   id: string;
   title: string;
@@ -8,6 +12,9 @@ interface Toast {
   type: 'default' | 'success' | 'error' | 'warning';
 }
 
+/**
+ * Context for the toaster
+ */
 interface ToasterContextType {
   toasts: Toast[];
   addToast: (toast: Omit<Toast, 'id'>) => void;
@@ -16,7 +23,11 @@ interface ToasterContextType {
 
 const ToasterContext = createContext<ToasterContextType | undefined>(undefined);
 
-export function useToaster() {
+/**
+ * Hook to access the toaster context
+ * Only used internally by the Toaster component
+ */
+function useToaster() {
   const context = useContext(ToasterContext);
   if (!context) {
     throw new Error('useToaster must be used within a ToasterProvider');
@@ -28,9 +39,15 @@ interface ToasterProviderProps {
   children: ReactNode;
 }
 
+/**
+ * ToasterProvider component
+ *
+ * Provides the toast functionality to the application
+ */
 export function ToasterProvider({ children }: ToasterProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  // Function to add a toast
   const addToast = (toast: Partial<Toast>) => {
     const id = toast.id || Math.random().toString(36).substring(2, 9);
     setToasts((prevToasts) => [...prevToasts, { ...toast, id } as Toast]);
@@ -41,9 +58,15 @@ export function ToasterProvider({ children }: ToasterProviderProps) {
     }, 5000);
   };
 
+  // Function to remove a toast
   const removeToast = (id: string) => {
     setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
   };
+
+  // Initialize the toast function when the component mounts
+  useEffect(() => {
+    initializeToast(addToast);
+  }, []);
 
   return (
     <ToasterContext.Provider value={{ toasts, addToast, removeToast }}>
@@ -53,7 +76,12 @@ export function ToasterProvider({ children }: ToasterProviderProps) {
   );
 }
 
-export function Toaster() {
+/**
+ * Toaster component
+ *
+ * Renders the toast notifications
+ */
+function Toaster() {
   const { toasts, removeToast } = useToaster();
 
   if (toasts.length === 0) return null;

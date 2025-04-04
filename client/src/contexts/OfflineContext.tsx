@@ -126,12 +126,8 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     };
   }, []);
 
-  // Listen for changes in online status to update pending changes
-  useEffect(() => {
-    if (online) {
-      checkPendingChanges();
-    }
-  }, [online]);
+  // We don't need a separate useEffect here since handleOnline already calls syncPendingChanges
+  // which will update the pending changes status
 
   const value = {
     online,
