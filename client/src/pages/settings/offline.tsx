@@ -5,29 +5,29 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { toast } from '@/components/ui/use-toast';
-import { 
-  Wifi, 
-  WifiOff, 
-  Download, 
-  Trash2, 
-  RefreshCw, 
-  HardDrive, 
-  Clock, 
+import { toast } from '@/components/ui/toast';
+import {
+  Wifi,
+  WifiOff,
+  Download,
+  Trash2,
+  RefreshCw,
+  HardDrive,
+  Clock,
   FileText,
   Loader2
 } from 'lucide-react';
 import { useOffline } from '@/contexts/OfflineContext';
-import { 
-  getAllCachedArticles, 
-  clearOfflineData, 
-  getPendingArticles 
+import {
+  getAllCachedArticles,
+  clearOfflineData,
+  getPendingArticles
 } from '@/lib/offlineStorage';
 import { getArticles } from '@/lib/articleService';
 
 /**
  * Offline Settings Page
- * 
+ *
  * Allows users to manage offline mode settings and cached content
  */
 export default function OfflineSettings() {
@@ -41,13 +41,13 @@ export default function OfflineSettings() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
-  
+
   // Load cached articles and storage info
   useEffect(() => {
     loadCachedArticles();
     loadStorageInfo();
     loadPendingArticles();
-    
+
     // Load settings from localStorage
     const savedSettings = localStorage.getItem('offlineSettings');
     if (savedSettings) {
@@ -57,7 +57,7 @@ export default function OfflineSettings() {
       setMaxOfflineArticles(settings.maxOfflineArticles ?? 50);
     }
   }, []);
-  
+
   // Save settings to localStorage when they change
   useEffect(() => {
     const settings = {
@@ -67,7 +67,7 @@ export default function OfflineSettings() {
     };
     localStorage.setItem('offlineSettings', JSON.stringify(settings));
   }, [enableOfflineMode, autoDownloadArticles, maxOfflineArticles]);
-  
+
   // Load cached articles
   const loadCachedArticles = async () => {
     try {
@@ -77,7 +77,7 @@ export default function OfflineSettings() {
       console.error('Failed to load cached articles:', error);
     }
   };
-  
+
   // Load pending articles
   const loadPendingArticles = async () => {
     try {
@@ -87,7 +87,7 @@ export default function OfflineSettings() {
       console.error('Failed to load pending articles:', error);
     }
   };
-  
+
   // Load storage usage information
   const loadStorageInfo = async () => {
     try {
@@ -96,7 +96,7 @@ export default function OfflineSettings() {
         const used = estimate.usage || 0;
         const total = estimate.quota || 0;
         const percentage = total > 0 ? Math.round((used / total) * 100) : 0;
-        
+
         setStorageUsage({
           used: Math.round(used / (1024 * 1024)), // Convert to MB
           total: Math.round(total / (1024 * 1024)), // Convert to MB
@@ -107,7 +107,7 @@ export default function OfflineSettings() {
       console.error('Failed to get storage estimate:', error);
     }
   };
-  
+
   // Download articles for offline use
   const downloadArticlesForOffline = async () => {
     if (!online) {
@@ -118,13 +118,13 @@ export default function OfflineSettings() {
       });
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       // Get recent articles
       const { data: articles } = await getArticles({ limit: maxOfflineArticles });
-      
+
       if (!articles || articles.length === 0) {
         toast({
           title: 'No articles to download',
@@ -134,7 +134,7 @@ export default function OfflineSettings() {
         setIsLoading(false);
         return;
       }
-      
+
       // Cache each article
       let successCount = 0;
       for (const article of articles) {
@@ -146,13 +146,13 @@ export default function OfflineSettings() {
           console.error(`Failed to cache article ${article.id}:`, error);
         }
       }
-      
+
       toast({
         title: 'Articles downloaded',
         description: `Successfully downloaded ${successCount} articles for offline use.`,
         variant: 'default',
       });
-      
+
       // Refresh the cached articles list
       loadCachedArticles();
       loadStorageInfo();
@@ -167,24 +167,24 @@ export default function OfflineSettings() {
       setIsLoading(false);
     }
   };
-  
+
   // Clear offline cache
   const clearOfflineCache = async () => {
     if (!confirm('Are you sure you want to clear all offline data? This will remove all cached articles and pending changes.')) {
       return;
     }
-    
+
     setIsClearing(true);
-    
+
     try {
       await clearOfflineData();
-      
+
       toast({
         title: 'Offline data cleared',
         description: 'All cached articles and pending changes have been removed.',
         variant: 'default',
       });
-      
+
       // Refresh the lists
       loadCachedArticles();
       loadPendingArticles();
@@ -200,14 +200,14 @@ export default function OfflineSettings() {
       setIsClearing(false);
     }
   };
-  
+
   // Sync pending changes
   const handleSyncChanges = async () => {
     setIsSyncing(true);
-    
+
     try {
       await syncPendingChanges();
-      
+
       // Refresh the lists after a short delay
       setTimeout(() => {
         loadPendingArticles();
@@ -219,7 +219,7 @@ export default function OfflineSettings() {
       setIsSyncing(false);
     }
   };
-  
+
   // Format bytes to human-readable size
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return bytes + ' B';
@@ -227,7 +227,7 @@ export default function OfflineSettings() {
     if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
   };
-  
+
   return (
     <div className="space-y-6">
       <div>
@@ -236,14 +236,14 @@ export default function OfflineSettings() {
           Configure how ReadLtr works when you're offline.
         </p>
       </div>
-      
+
       <Tabs defaultValue="settings" className="space-y-4">
         <TabsList>
           <TabsTrigger value="settings">Settings</TabsTrigger>
           <TabsTrigger value="cached">Cached Articles</TabsTrigger>
           <TabsTrigger value="pending">Pending Changes</TabsTrigger>
         </TabsList>
-        
+
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-4">
           <Card>
@@ -267,7 +267,7 @@ export default function OfflineSettings() {
                   onCheckedChange={setEnableOfflineMode}
                 />
               </div>
-              
+
               <div className="flex items-center justify-between space-x-2">
                 <Label htmlFor="auto-download" className="flex flex-col space-y-1">
                   <span>Auto-download articles</span>
@@ -282,7 +282,7 @@ export default function OfflineSettings() {
                   disabled={!enableOfflineMode}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="max-articles">Maximum articles to cache ({maxOfflineArticles})</Label>
                 <input
@@ -302,7 +302,7 @@ export default function OfflineSettings() {
                   <span>200</span>
                 </div>
               </div>
-              
+
               <div className="pt-4 flex flex-col gap-4">
                 <Button
                   onClick={downloadArticlesForOffline}
@@ -321,7 +321,7 @@ export default function OfflineSettings() {
                     </>
                   )}
                 </Button>
-                
+
                 <Button
                   variant="destructive"
                   onClick={clearOfflineCache}
@@ -343,7 +343,7 @@ export default function OfflineSettings() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Storage Usage</CardTitle>
@@ -362,7 +362,7 @@ export default function OfflineSettings() {
                   {storageUsage.percentage}% of available storage used
                 </p>
               </div>
-              
+
               <div className="pt-2 grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-blue-900/20 rounded-full">
@@ -373,7 +373,7 @@ export default function OfflineSettings() {
                     <p className="text-xs text-zinc-500">Cached Articles</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-amber-900/20 rounded-full">
                     <Clock className="h-4 w-4 text-amber-500" />
@@ -387,7 +387,7 @@ export default function OfflineSettings() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Cached Articles Tab */}
         <TabsContent value="cached" className="space-y-4">
           <Card>
@@ -432,7 +432,7 @@ export default function OfflineSettings() {
                       )}
                     </Button>
                   </div>
-                  
+
                   <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
                     {cachedArticles.map((article) => (
                       <div
@@ -460,7 +460,7 @@ export default function OfflineSettings() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Pending Changes Tab */}
         <TabsContent value="pending" className="space-y-4">
           <Card>
@@ -498,7 +498,7 @@ export default function OfflineSettings() {
                       )}
                     </Button>
                   </div>
-                  
+
                   <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
                     {pendingArticles.map((article) => (
                       <div
@@ -519,7 +519,7 @@ export default function OfflineSettings() {
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className="pt-2">
                     <Button
                       onClick={handleSyncChanges}

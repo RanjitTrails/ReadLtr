@@ -3,11 +3,11 @@ import { useParams, Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Article } from '@shared/schema';
-import { 
-  ArrowLeft, 
-  Heart, 
-  Bookmark, 
-  Share2, 
+import {
+  ArrowLeft,
+  Heart,
+  Bookmark,
+  Share2,
   ExternalLink,
   Clock,
   Calendar,
@@ -19,26 +19,26 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useAuth } from '@/lib/api';
-import { 
-  likeArticle, 
-  unlikeArticle, 
+import {
+  likeArticle,
+  unlikeArticle,
   hasLikedArticle,
   incrementShareCount,
   getShareableLink
 } from '@/lib/socialService';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/toast';
 import CommentSection from '@/components/social/CommentSection';
 
 export default function SharedArticlePage() {
   const { id } = useParams();
   const { user } = useAuth();
   const [showComments, setShowComments] = useState(false);
-  
+
   // Fetch article
-  const { 
-    data: article, 
-    isLoading, 
-    error 
+  const {
+    data: article,
+    isLoading,
+    error
   } = useQuery({
     queryKey: ['sharedArticle', id],
     queryFn: async () => {
@@ -48,15 +48,15 @@ export default function SharedArticlePage() {
         .eq('id', id)
         .eq('is_public', true)
         .single();
-      
+
       if (error) throw error;
       return data as Article & { profile: any };
     },
     enabled: !!id
   });
-  
+
   // Check if user has liked this article
-  const { 
+  const {
     data: isLiked = false,
     refetch: refetchLikeStatus
   } = useQuery({
@@ -64,7 +64,7 @@ export default function SharedArticlePage() {
     queryFn: () => hasLikedArticle(id as string),
     enabled: !!id && !!user
   });
-  
+
   // Increment view count
   useEffect(() => {
     if (article?.id) {
@@ -73,11 +73,11 @@ export default function SharedArticlePage() {
           article_id: article.id
         });
       };
-      
+
       incrementViewCount();
     }
   }, [article?.id]);
-  
+
   // Handle like/unlike
   const handleLikeToggle = async () => {
     if (!user) {
@@ -87,7 +87,7 @@ export default function SharedArticlePage() {
       });
       return;
     }
-    
+
     try {
       if (isLiked) {
         await unlikeArticle(id as string);
@@ -99,11 +99,11 @@ export default function SharedArticlePage() {
       console.error('Error toggling like:', error);
     }
   };
-  
+
   // Handle share
   const handleShare = async () => {
     const shareUrl = getShareableLink(id as string);
-    
+
     if (navigator.share) {
       navigator.share({
         title: article?.title || 'Shared Article',
@@ -124,11 +124,11 @@ export default function SharedArticlePage() {
       });
     }
   };
-  
+
   // Format date
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
-    
+
     try {
       const date = new Date(dateString);
       return format(date, 'MMMM d, yyyy');
@@ -136,7 +136,7 @@ export default function SharedArticlePage() {
       return "";
     }
   };
-  
+
   // Loading state
   if (isLoading) {
     return (
@@ -153,7 +153,7 @@ export default function SharedArticlePage() {
             <Skeleton className="h-4 w-full mb-2" />
             <Skeleton className="h-4 w-2/3" />
           </div>
-          
+
           <div className="space-y-4">
             {Array(10).fill(0).map((_, i) => (
               <Skeleton key={i} className="h-4 w-full" />
@@ -163,7 +163,7 @@ export default function SharedArticlePage() {
       </div>
     );
   }
-  
+
   // Error state
   if (error || !article) {
     return (
@@ -180,14 +180,14 @@ export default function SharedArticlePage() {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <div className="max-w-4xl mx-auto py-8 px-4">
         {/* Back button */}
         <div className="mb-8">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             className="mb-4"
             asChild
           >
@@ -197,11 +197,11 @@ export default function SharedArticlePage() {
             </Link>
           </Button>
         </div>
-        
+
         {/* Article header */}
         <header className="mb-8">
           <h1 className="text-3xl font-bold mb-4">{article.title}</h1>
-          
+
           {/* Author and metadata */}
           <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
             <div className="flex items-center gap-2">
@@ -211,7 +211,7 @@ export default function SharedArticlePage() {
                   {article.profile?.name?.charAt(0) || 'U'}
                 </AvatarFallback>
               </Avatar>
-              
+
               <div>
                 <Link href={`/profile/${article.profile?.id}`}>
                   <a className="text-sm font-medium hover:text-blue-400 transition-colors">
@@ -220,7 +220,7 @@ export default function SharedArticlePage() {
                 </Link>
               </div>
             </div>
-            
+
             <div className="flex flex-wrap gap-4 text-sm text-zinc-400">
               {article.published_date && (
                 <div className="flex items-center gap-1">
@@ -228,14 +228,14 @@ export default function SharedArticlePage() {
                   <span>{formatDate(article.published_date)}</span>
                 </div>
               )}
-              
+
               {article.read_time && (
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
                   <span>{article.read_time} min read</span>
                 </div>
               )}
-              
+
               {article.author && (
                 <div className="flex items-center gap-1">
                   <User className="h-4 w-4" />
@@ -244,25 +244,25 @@ export default function SharedArticlePage() {
               )}
             </div>
           </div>
-          
+
           {/* Article image */}
           {article.image_url && (
             <div className="mb-6">
-              <img 
-                src={article.image_url} 
-                alt={article.title} 
+              <img
+                src={article.image_url}
+                alt={article.title}
                 className="w-full h-auto max-h-96 object-cover rounded-lg"
               />
             </div>
           )}
-          
+
           {/* Article excerpt */}
           {article.excerpt && (
             <div className="mb-6 text-lg text-zinc-300 italic border-l-4 border-zinc-700 pl-4">
               {article.excerpt}
             </div>
           )}
-          
+
           {/* Action buttons */}
           <div className="flex flex-wrap gap-3 mb-8 border-b border-zinc-800 pb-6">
             <Button
@@ -279,7 +279,7 @@ export default function SharedArticlePage() {
                 </span>
               )}
             </Button>
-            
+
             <Button
               variant="outline"
               size="sm"
@@ -294,7 +294,7 @@ export default function SharedArticlePage() {
                 </span>
               )}
             </Button>
-            
+
             <Button
               variant="outline"
               size="sm"
@@ -304,23 +304,23 @@ export default function SharedArticlePage() {
               <Share2 className="h-4 w-4" />
               <span>Share</span>
             </Button>
-            
+
             <Button
               variant="outline"
               size="sm"
               className="gap-2"
               asChild
             >
-              <a 
-                href={article.url} 
-                target="_blank" 
+              <a
+                href={article.url}
+                target="_blank"
                 rel="noopener noreferrer"
               >
                 <ExternalLink className="h-4 w-4" />
                 <span>Original</span>
               </a>
             </Button>
-            
+
             {user && (
               <Button
                 variant="outline"
@@ -336,12 +336,12 @@ export default function SharedArticlePage() {
             )}
           </div>
         </header>
-        
+
         {/* Article content */}
         <div className="prose prose-invert prose-zinc max-w-none mb-12">
           <div dangerouslySetInnerHTML={{ __html: article.content || '' }} />
         </div>
-        
+
         {/* Comments section */}
         {showComments && (
           <CommentSection articleId={article.id} />

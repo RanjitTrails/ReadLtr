@@ -28,7 +28,7 @@ import {
   getShareableLink
 } from "@/lib/socialService";
 import { queryClient } from "@/lib/queryClient";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/lib/api";
 
 export interface ArticleCardProps {

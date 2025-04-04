@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  getArticleComments, 
-  addComment, 
-  updateComment, 
+import {
+  getArticleComments,
+  addComment,
+  updateComment,
   deleteComment,
   likeComment,
   unlikeComment,
@@ -15,15 +15,15 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
-import { 
-  Heart, 
-  Reply, 
-  Edit, 
-  Trash2, 
+import {
+  Heart,
+  Reply,
+  Edit,
+  Trash2,
   Loader2,
   MessageSquare
 } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/toast';
 import { Link } from 'wouter';
 
 interface CommentSectionProps {
@@ -36,17 +36,17 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
   const [newComment, setNewComment] = useState('');
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState('');
-  
+
   // Fetch comments
-  const { 
-    data: comments = [], 
-    isLoading: commentsLoading 
+  const {
+    data: comments = [],
+    isLoading: commentsLoading
   } = useQuery({
     queryKey: ['comments', articleId],
     queryFn: () => getArticleComments(articleId),
     enabled: !!articleId
   });
-  
+
   // Add comment mutation
   const addCommentMutation = useMutation({
     mutationFn: addComment,
@@ -60,10 +60,10 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
       });
     }
   });
-  
+
   // Update comment mutation
   const updateCommentMutation = useMutation({
-    mutationFn: ({ commentId, content }: { commentId: string, content: string }) => 
+    mutationFn: ({ commentId, content }: { commentId: string, content: string }) =>
       updateComment(commentId, content),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', articleId] });
@@ -75,7 +75,7 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
       });
     }
   });
-  
+
   // Delete comment mutation
   const deleteCommentMutation = useMutation({
     mutationFn: deleteComment,
@@ -88,7 +88,7 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
       });
     }
   });
-  
+
   // Like comment mutation
   const likeCommentMutation = useMutation({
     mutationFn: likeComment,
@@ -97,7 +97,7 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
       queryClient.invalidateQueries({ queryKey: ['comments', articleId] });
     }
   });
-  
+
   // Unlike comment mutation
   const unlikeCommentMutation = useMutation({
     mutationFn: unlikeComment,
@@ -106,10 +106,10 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
       queryClient.invalidateQueries({ queryKey: ['comments', articleId] });
     }
   });
-  
+
   const handleSubmitComment = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast({
         title: "Sign in required",
@@ -117,7 +117,7 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
       });
       return;
     }
-    
+
     if (!newComment.trim()) {
       toast({
         title: "Empty comment",
@@ -126,18 +126,18 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
       });
       return;
     }
-    
+
     addCommentMutation.mutate({
       article_id: articleId,
       content: newComment.trim()
     });
   };
-  
+
   const handleEditComment = (commentId: string, currentContent: string) => {
     setEditingCommentId(commentId);
     setEditedContent(currentContent);
   };
-  
+
   const handleUpdateComment = (commentId: string) => {
     if (!editedContent.trim()) {
       toast({
@@ -147,19 +147,19 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
       });
       return;
     }
-    
+
     updateCommentMutation.mutate({
       commentId,
       content: editedContent.trim()
     });
   };
-  
+
   const handleDeleteComment = (commentId: string) => {
     if (confirm('Are you sure you want to delete this comment?')) {
       deleteCommentMutation.mutate(commentId);
     }
   };
-  
+
   const handleLikeComment = async (commentId: string) => {
     if (!user) {
       toast({
@@ -168,16 +168,16 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
       });
       return;
     }
-    
+
     const isLiked = await hasLikedComment(commentId);
-    
+
     if (isLiked) {
       unlikeCommentMutation.mutate(commentId);
     } else {
       likeCommentMutation.mutate(commentId);
     }
   };
-  
+
   // Format date
   const formatDate = (dateString: string) => {
     try {
@@ -186,14 +186,14 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
       return 'recently';
     }
   };
-  
+
   return (
     <div className="border-t border-zinc-800 pt-8">
       <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
         <MessageSquare className="h-5 w-5" />
         Comments {comments.length > 0 && `(${comments.length})`}
       </h2>
-      
+
       {/* Add comment form */}
       {user ? (
         <form onSubmit={handleSubmitComment} className="mb-8">
@@ -204,7 +204,7 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
                 {user.user_metadata?.name?.charAt(0) || user.email?.charAt(0) || 'U'}
               </AvatarFallback>
             </Avatar>
-            
+
             <div className="flex-1">
               <Textarea
                 placeholder="Add a comment..."
@@ -212,10 +212,10 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
                 onChange={(e) => setNewComment(e.target.value)}
                 className="mb-3 bg-zinc-900 border-zinc-800 min-h-[100px]"
               />
-              
+
               <div className="flex justify-end">
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={addCommentMutation.isPending || !newComment.trim()}
                   className="gap-2"
                 >
@@ -245,7 +245,7 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
           </Button>
         </div>
       )}
-      
+
       {/* Comments list */}
       {commentsLoading ? (
         <div className="space-y-6">
@@ -278,7 +278,7 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
                   {comment.profile?.name?.charAt(0) || 'U'}
                 </AvatarFallback>
               </Avatar>
-              
+
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <Link href={`/profile/${comment.profile?.id}`}>
@@ -286,18 +286,18 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
                       {comment.profile?.name || comment.profile?.display_name || 'User'}
                     </a>
                   </Link>
-                  
+
                   <span className="text-xs text-zinc-500">
                     {formatDate(comment.created_at)}
                   </span>
-                  
+
                   {comment.created_at !== comment.updated_at && (
                     <span className="text-xs text-zinc-600 italic">
                       (edited)
                     </span>
                   )}
                 </div>
-                
+
                 {editingCommentId === comment.id ? (
                   <div className="mb-2">
                     <Textarea
@@ -305,16 +305,16 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
                       onChange={(e) => setEditedContent(e.target.value)}
                       className="mb-2 bg-zinc-900 border-zinc-800"
                     />
-                    
+
                     <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => setEditingCommentId(null)}
                       >
                         Cancel
                       </Button>
-                      <Button 
+                      <Button
                         size="sm"
                         onClick={() => handleUpdateComment(comment.id)}
                         disabled={updateCommentMutation.isPending}
@@ -337,27 +337,27 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
                 ) : (
                   <p className="text-zinc-300 mb-2">{comment.content}</p>
                 )}
-                
+
                 <div className="flex items-center gap-3 text-xs text-zinc-500">
-                  <button 
+                  <button
                     className="flex items-center gap-1 hover:text-zinc-300 transition-colors"
                     onClick={() => handleLikeComment(comment.id)}
                   >
                     <Heart className={`h-3.5 w-3.5 ${comment.like_count > 0 ? 'text-red-500 fill-red-500' : ''}`} />
                     <span>{comment.like_count > 0 ? comment.like_count : 'Like'}</span>
                   </button>
-                  
+
                   {user?.id === comment.user_id && !editingCommentId && (
                     <>
-                      <button 
+                      <button
                         className="flex items-center gap-1 hover:text-zinc-300 transition-colors"
                         onClick={() => handleEditComment(comment.id, comment.content)}
                       >
                         <Edit className="h-3.5 w-3.5" />
                         <span>Edit</span>
                       </button>
-                      
-                      <button 
+
+                      <button
                         className="flex items-center gap-1 hover:text-red-400 transition-colors"
                         onClick={() => handleDeleteComment(comment.id)}
                       >

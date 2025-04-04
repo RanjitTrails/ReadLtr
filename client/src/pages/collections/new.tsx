@@ -7,16 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { 
-  ArrowLeft, 
-  Bookmark, 
-  Globe, 
+import {
+  ArrowLeft,
+  Bookmark,
+  Globe,
   Lock,
   Image,
   Loader2
 } from 'lucide-react';
 import { createCollection } from '@/lib/socialService';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/toast';
 
 export default function NewCollectionPage() {
   const [, navigate] = useLocation();
@@ -24,7 +24,7 @@ export default function NewCollectionPage() {
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [coverImageUrl, setCoverImageUrl] = useState('');
-  
+
   // Create collection mutation
   const createMutation = useMutation({
     mutationFn: createCollection,
@@ -44,10 +44,10 @@ export default function NewCollectionPage() {
       console.error('Error creating collection:', error);
     }
   });
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
       toast({
         title: "Error",
@@ -56,7 +56,7 @@ export default function NewCollectionPage() {
       });
       return;
     }
-    
+
     createMutation.mutate({
       name,
       description: description || undefined,
@@ -64,23 +64,23 @@ export default function NewCollectionPage() {
       cover_image_url: coverImageUrl || undefined
     });
   };
-  
+
   return (
     <Layout>
       <div className="max-w-3xl mx-auto py-8 px-4">
         <div className="mb-8">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             className="mb-4"
             onClick={() => navigate('/collections')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Collections
           </Button>
-          
+
           <h1 className="text-2xl font-bold text-white">Create New Collection</h1>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="name">Collection Name</Label>
@@ -93,7 +93,7 @@ export default function NewCollectionPage() {
               className="bg-zinc-900 border-zinc-800"
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="description">Description (optional)</Label>
             <Textarea
@@ -104,7 +104,7 @@ export default function NewCollectionPage() {
               className="bg-zinc-900 border-zinc-800 min-h-[100px]"
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="coverImage">Cover Image URL (optional)</Label>
             <Input
@@ -116,9 +116,9 @@ export default function NewCollectionPage() {
             />
             {coverImageUrl && (
               <div className="mt-2 relative h-32 bg-zinc-800 rounded-md overflow-hidden">
-                <img 
-                  src={coverImageUrl} 
-                  alt="Cover preview" 
+                <img
+                  src={coverImageUrl}
+                  alt="Cover preview"
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     e.currentTarget.src = 'https://placehold.co/600x400/1f1f23/3f3f46?text=Invalid+Image+URL';
@@ -127,7 +127,7 @@ export default function NewCollectionPage() {
               </div>
             )}
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Switch
               id="public"
@@ -148,25 +148,25 @@ export default function NewCollectionPage() {
               )}
             </Label>
           </div>
-          
+
           {isPublic && (
             <div className="bg-blue-950/30 border border-blue-900 rounded-md p-4 text-sm text-blue-200">
               <p>
-                <strong>Public collections are visible to everyone.</strong> Anyone can view the articles in this collection, 
+                <strong>Public collections are visible to everyone.</strong> Anyone can view the articles in this collection,
                 but only you can add or remove articles.
               </p>
             </div>
           )}
-          
+
           <div className="flex justify-end gap-3 pt-4">
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               variant="outline"
               onClick={() => navigate('/collections')}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               type="submit"
               disabled={createMutation.isPending || !name.trim()}
               className="gap-2"

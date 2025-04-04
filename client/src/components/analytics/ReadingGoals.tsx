@@ -1,26 +1,26 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  getReadingGoals, 
-  getGoalProgress, 
-  createReadingGoal, 
-  updateReadingGoal, 
-  deleteReadingGoal 
+import {
+  getReadingGoals,
+  getGoalProgress,
+  createReadingGoal,
+  updateReadingGoal,
+  deleteReadingGoal
 } from '@/lib/analyticsService';
 import { ReadingGoal } from '@shared/analytics-schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Target, 
-  Plus, 
-  Check, 
-  Clock, 
-  BookOpen, 
-  Calendar, 
-  Trash2, 
-  Edit, 
+import {
+  Target,
+  Plus,
+  Check,
+  Clock,
+  BookOpen,
+  Calendar,
+  Trash2,
+  Edit,
   X,
   Loader2
 } from 'lucide-react';
@@ -42,15 +42,15 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -70,21 +70,21 @@ type GoalFormValues = z.infer<typeof goalFormSchema>;
 
 /**
  * Reading Goals Component
- * 
+ *
  * Displays and manages reading goals
  */
 export default function ReadingGoals() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<ReadingGoal | null>(null);
   const queryClient = useQueryClient();
-  
+
   // Fetch reading goals
   const { data: goals = [], isLoading } = useQuery({
     queryKey: ['readingGoals'],
     queryFn: getReadingGoals,
     refetchOnWindowFocus: false,
   });
-  
+
   // Fetch goal progress for each goal
   const goalProgressQueries = useQuery({
     queryKey: ['goalProgress', goals.map(g => g.id).join(',')],
@@ -97,7 +97,7 @@ export default function ReadingGoals() {
     enabled: goals.length > 0,
     refetchOnWindowFocus: false,
   });
-  
+
   // Create goal mutation
   const createGoalMutation = useMutation({
     mutationFn: createReadingGoal,
@@ -117,7 +117,7 @@ export default function ReadingGoals() {
       });
     },
   });
-  
+
   // Update goal mutation
   const updateGoalMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<ReadingGoal> }) =>
@@ -140,7 +140,7 @@ export default function ReadingGoals() {
       });
     },
   });
-  
+
   // Delete goal mutation
   const deleteGoalMutation = useMutation({
     mutationFn: deleteReadingGoal,
@@ -159,7 +159,7 @@ export default function ReadingGoals() {
       });
     },
   });
-  
+
   // Form for creating/editing goals
   const form = useForm<GoalFormValues>({
     resolver: zodResolver(goalFormSchema),
@@ -171,7 +171,7 @@ export default function ReadingGoals() {
       is_recurring: false,
     },
   });
-  
+
   // Handle form submission
   const onSubmit = (values: GoalFormValues) => {
     if (editingGoal) {
@@ -183,7 +183,7 @@ export default function ReadingGoals() {
       createGoalMutation.mutate(values);
     }
   };
-  
+
   // Open dialog for editing a goal
   const handleEditGoal = (goal: ReadingGoal) => {
     setEditingGoal(goal);
@@ -197,7 +197,7 @@ export default function ReadingGoals() {
     });
     setIsDialogOpen(true);
   };
-  
+
   // Open dialog for creating a new goal
   const handleNewGoal = () => {
     setEditingGoal(null);
@@ -210,7 +210,7 @@ export default function ReadingGoals() {
     });
     setIsDialogOpen(true);
   };
-  
+
   // Handle dialog close
   const handleDialogClose = () => {
     setIsDialogOpen(false);
@@ -219,7 +219,7 @@ export default function ReadingGoals() {
       form.reset();
     }, 300);
   };
-  
+
   // Format goal type for display
   const formatGoalType = (type: string) => {
     switch (type) {
@@ -233,7 +233,7 @@ export default function ReadingGoals() {
         return type;
     }
   };
-  
+
   if (isLoading) {
     return (
       <Card className="bg-zinc-900 border-zinc-800">
@@ -256,7 +256,7 @@ export default function ReadingGoals() {
       </Card>
     );
   }
-  
+
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader className="pb-2">
@@ -276,9 +276,9 @@ export default function ReadingGoals() {
           <div className="text-center py-8 text-zinc-500">
             <Target className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p>You don't have any reading goals yet.</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="mt-4"
               onClick={handleNewGoal}
             >
@@ -290,7 +290,7 @@ export default function ReadingGoals() {
           <div className="space-y-4">
             {goals.map((goal) => {
               const progress = goalProgressQueries.data?.find(p => p?.goal.id === goal.id);
-              
+
               return (
                 <div
                   key={goal.id}
@@ -346,7 +346,7 @@ export default function ReadingGoals() {
                       </Button>
                     </div>
                   </div>
-                  
+
                   {goalProgressQueries.isLoading ? (
                     <Skeleton className="h-2 w-full mt-2" />
                   ) : (
@@ -382,7 +382,7 @@ export default function ReadingGoals() {
           </div>
         )}
       </CardContent>
-      
+
       {/* Goal Form Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="bg-zinc-900 border-zinc-700 text-white">
@@ -391,7 +391,7 @@ export default function ReadingGoals() {
               {editingGoal ? 'Edit Reading Goal' : 'Create Reading Goal'}
             </DialogTitle>
           </DialogHeader>
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -428,7 +428,7 @@ export default function ReadingGoals() {
                   </FormItem>
                 )}
               />
-              
+
               <div className="flex gap-4">
                 <FormField
                   control={form.control}
@@ -448,7 +448,7 @@ export default function ReadingGoals() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="target_unit"
@@ -474,7 +474,7 @@ export default function ReadingGoals() {
                   )}
                 />
               </div>
-              
+
               <div className="flex gap-4">
                 <FormField
                   control={form.control}
@@ -493,7 +493,7 @@ export default function ReadingGoals() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="end_date"
@@ -513,7 +513,7 @@ export default function ReadingGoals() {
                   )}
                 />
               </div>
-              
+
               <FormField
                 control={form.control}
                 name="is_recurring"
@@ -534,7 +534,7 @@ export default function ReadingGoals() {
                   </FormItem>
                 )}
               />
-              
+
               <div className="flex justify-end gap-2 pt-4">
                 <DialogClose asChild>
                   <Button

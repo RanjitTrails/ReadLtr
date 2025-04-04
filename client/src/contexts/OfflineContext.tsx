@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { 
-  isOnline, 
-  registerConnectivityListeners, 
+import {
+  isOnline,
+  registerConnectivityListeners,
   unregisterConnectivityListeners,
   getPendingArticles
 } from '@/lib/offlineStorage';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/toast';
 
 interface OfflineContextType {
   online: boolean;
@@ -30,12 +30,12 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     setOnline(true);
     toast({
       title: 'You are back online',
-      description: hasPendingChanges 
-        ? 'Your offline changes will be synchronized.' 
+      description: hasPendingChanges
+        ? 'Your offline changes will be synchronized.'
         : 'You can now access all features.',
       variant: 'default',
     });
-    
+
     // Trigger sync if there are pending changes
     if (hasPendingChanges) {
       syncPendingChanges();
@@ -82,13 +82,13 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         await registration.sync.register('sync-articles');
         await registration.sync.register('sync-highlights');
         await registration.sync.register('sync-notes');
-        
+
         toast({
           title: 'Syncing changes',
           description: 'Your offline changes are being synchronized.',
           variant: 'default',
         });
-        
+
         // Check again after a delay to update UI
         setTimeout(() => {
           checkPendingChanges();
@@ -116,10 +116,10 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
   useEffect(() => {
     registerConnectivityListeners(handleOnline, handleOffline);
     checkPendingChanges();
-    
+
     // Set up periodic checks for pending changes
     const intervalId = setInterval(checkPendingChanges, 30000); // Check every 30 seconds
-    
+
     return () => {
       unregisterConnectivityListeners(handleOnline, handleOffline);
       clearInterval(intervalId);

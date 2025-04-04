@@ -6,26 +6,26 @@ import { Hash, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/toast';
 import { useState } from 'react';
 
 /**
  * Topic Interests Component
- * 
+ *
  * Displays and manages user's topic interests
  */
 export default function TopicInterests() {
   const [newTopic, setNewTopic] = useState('');
   const [newInterestLevel, setNewInterestLevel] = useState([50]);
   const queryClient = useQueryClient();
-  
+
   // Fetch user topic interests
   const { data: topics = [], isLoading } = useQuery({
     queryKey: ['topicInterests'],
     queryFn: getUserTopicInterests,
     refetchOnWindowFocus: false,
   });
-  
+
   // Update topic interest mutation
   const updateInterestMutation = useMutation({
     mutationFn: ({ topic, interestLevel }: { topic: string; interestLevel: number }) =>
@@ -45,7 +45,7 @@ export default function TopicInterests() {
       });
     },
   });
-  
+
   // Handle adding a new topic
   const handleAddTopic = () => {
     if (!newTopic.trim()) {
@@ -56,16 +56,16 @@ export default function TopicInterests() {
       });
       return;
     }
-    
+
     updateInterestMutation.mutate({
       topic: newTopic.trim(),
       interestLevel: newInterestLevel[0] / 100,
     });
-    
+
     setNewTopic('');
     setNewInterestLevel([50]);
   };
-  
+
   // Handle updating interest level
   const handleUpdateInterest = (topic: string, interestLevel: number) => {
     updateInterestMutation.mutate({
@@ -73,7 +73,7 @@ export default function TopicInterests() {
       interestLevel: interestLevel / 100,
     });
   };
-  
+
   if (isLoading) {
     return (
       <Card className="bg-zinc-900 border-zinc-800">
@@ -93,7 +93,7 @@ export default function TopicInterests() {
       </Card>
     );
   }
-  
+
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader className="pb-2">
@@ -132,7 +132,7 @@ export default function TopicInterests() {
               />
             </div>
           </div>
-          
+
           {/* Topic list */}
           {topics.length === 0 ? (
             <div className="text-center py-6 text-zinc-500">

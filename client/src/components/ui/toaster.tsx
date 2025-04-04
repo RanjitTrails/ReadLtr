@@ -31,10 +31,10 @@ interface ToasterProviderProps {
 export function ToasterProvider({ children }: ToasterProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = (toast: Omit<Toast, 'id'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prevToasts) => [...prevToasts, { ...toast, id }]);
-    
+  const addToast = (toast: Partial<Toast>) => {
+    const id = toast.id || Math.random().toString(36).substring(2, 9);
+    setToasts((prevToasts) => [...prevToasts, { ...toast, id } as Toast]);
+
     // Auto remove after 5 seconds
     setTimeout(() => {
       removeToast(id);

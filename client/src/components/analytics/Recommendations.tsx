@@ -1,38 +1,38 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  getArticleRecommendations, 
-  markRecommendationAsRead, 
-  dismissRecommendation 
+import {
+  getArticleRecommendations,
+  markRecommendationAsRead,
+  dismissRecommendation
 } from '@/lib/analyticsService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Sparkles, 
-  BookOpen, 
-  ExternalLink, 
-  X, 
-  ThumbsUp, 
-  Clock 
+import {
+  Sparkles,
+  BookOpen,
+  ExternalLink,
+  X,
+  ThumbsUp,
+  Clock
 } from 'lucide-react';
 import { Link } from 'wouter';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/toast';
 
 /**
  * Recommendations Component
- * 
+ *
  * Displays article recommendations based on reading history and interests
  */
 export default function Recommendations() {
   const queryClient = useQueryClient();
-  
+
   // Fetch article recommendations
   const { data: recommendations = [], isLoading } = useQuery({
     queryKey: ['articleRecommendations'],
     queryFn: () => getArticleRecommendations(5),
     refetchOnWindowFocus: false,
   });
-  
+
   // Mark recommendation as read mutation
   const markAsReadMutation = useMutation({
     mutationFn: markRecommendationAsRead,
@@ -40,7 +40,7 @@ export default function Recommendations() {
       queryClient.invalidateQueries({ queryKey: ['articleRecommendations'] });
     },
   });
-  
+
   // Dismiss recommendation mutation
   const dismissMutation = useMutation({
     mutationFn: dismissRecommendation,
@@ -52,21 +52,21 @@ export default function Recommendations() {
       });
     },
   });
-  
+
   // Handle saving a recommendation
   const handleSaveRecommendation = (recommendation: any) => {
     // Navigate to save page with the URL
     window.location.href = `/save?url=${encodeURIComponent(recommendation.article.url)}`;
-    
+
     // Mark as read
     markAsReadMutation.mutate(recommendation.id);
   };
-  
+
   // Handle dismissing a recommendation
   const handleDismiss = (id: string) => {
     dismissMutation.mutate(id);
   };
-  
+
   if (isLoading) {
     return (
       <Card className="bg-zinc-900 border-zinc-800">
@@ -93,7 +93,7 @@ export default function Recommendations() {
       </Card>
     );
   }
-  
+
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader className="pb-2">
@@ -127,7 +127,7 @@ export default function Recommendations() {
                     <BookOpen className="h-6 w-6 text-zinc-500" />
                   </div>
                 )}
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between">
                     <h3 className="font-medium text-sm line-clamp-2">
@@ -146,13 +146,13 @@ export default function Recommendations() {
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
-                  
+
                   {recommendation.reason && (
                     <p className="text-xs text-zinc-500 mt-1">
                       {recommendation.reason}
                     </p>
                   )}
-                  
+
                   <div className="flex gap-2 mt-2">
                     <Button
                       size="sm"
@@ -167,14 +167,14 @@ export default function Recommendations() {
                       <ThumbsUp className="h-3 w-3 mr-1" />
                       Save
                     </Button>
-                    
+
                     {recommendation.article.read_time && (
                       <div className="flex items-center text-xs text-zinc-500">
                         <Clock className="h-3 w-3 mr-1" />
                         {recommendation.article.read_time} min
                       </div>
                     )}
-                    
+
                     <a
                       href={recommendation.article.url}
                       target="_blank"
