@@ -8,9 +8,116 @@
     <meta name="theme-color" content="#09090b" />
     <title>ReadLtr - Save Articles for Later</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        background-color: #09090b;
+        color: #f1f5f9;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+      #root {
+        min-height: 100vh;
+      }
+      .loading-screen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        width: 100%;
+      }
+      .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        border-top: 4px solid #3b82f6;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .error-container {
+        display: none;
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #1f2937;
+        border-radius: 8px;
+        margin-top: 20px;
+        text-align: center;
+      }
+      .error-message {
+        color: #ef4444;
+        margin-bottom: 15px;
+      }
+      .retry-button {
+        background-color: #3b82f6;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .retry-button:hover {
+        background-color: #2563eb;
+      }
+      .fallback-link {
+        margin-top: 10px;
+        color: #9ca3af;
+        font-size: 14px;
+      }
+      .fallback-link a {
+        color: #60a5fa;
+        text-decoration: none;
+      }
+    </style>
   </head>
-  <body class="bg-zinc-950 text-zinc-100">
-    <div id="root"></div>
+  <body>
+    <div id="root">
+      <!-- Fallback loading screen -->
+      <div class="loading-screen">
+        <div class="spinner"></div>
+        <div>Loading ReadLtr...</div>
+        <div class="error-container" id="error-container">
+          <div class="error-message" id="error-message">Failed to load the application.</div>
+          <button class="retry-button" onclick="window.location.reload()">Retry</button>
+          <div class="fallback-link">
+            <a href="/test.html">Try test page</a> |
+            <a href="/?debug=true">Debug mode</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Show error after timeout -->
+    <script>
+      // Show error message if app doesn't load within 10 seconds
+      setTimeout(function() {
+        const errorContainer = document.getElementById('error-container');
+        if (errorContainer) {
+          errorContainer.style.display = 'block';
+        }
+      }, 10000);
+
+      // Capture and display errors
+      window.addEventListener('error', function(event) {
+        console.error('Application error:', event.error || event.message);
+        const errorContainer = document.getElementById('error-container');
+        const errorMessage = document.getElementById('error-message');
+
+        if (errorContainer && errorMessage) {
+          errorContainer.style.display = 'block';
+          errorMessage.textContent = 'Error: ' + (event.error?.message || event.message || 'Unknown error');
+        }
+      });
+    </script>
+
+    <!-- Main application script -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

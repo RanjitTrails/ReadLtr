@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReadLtr Test Page</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 600px;
+      background-color: #1e1e1e;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #3b82f6;
+      margin-bottom: 20px;
+    }
+    p {
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+    .button {
+      display: inline-block;
+      background-color: #3b82f6;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 500;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ReadLtr Test Page</h1>
+    <p>If you can see this page, basic static file serving is working correctly.</p>
+    <p>This is a test page to diagnose deployment issues with the ReadLtr application.</p>
+    <p>Current time: <span id="current-time"></span></p>
+    <p>JavaScript is: <span id="js-status">NOT WORKING</span></p>
+    <a href="/" class="button">Try Main App</a>
+  </div>
+
+  <script>
+    // Update the current time
+    document.getElementById('current-time').textContent = new Date().toLocaleString();
+    
+    // Update JavaScript status
+    document.getElementById('js-status').textContent = 'WORKING';
+    document.getElementById('js-status').style.color = '#4ade80';
+    
+    // Log some debug info
+    console.log('Test page loaded successfully');
+    console.log('User Agent:', navigator.userAgent);
+    console.log('Window Size:', window.innerWidth, 'x', window.innerHeight);
+  </script>
+</body>
+</html>

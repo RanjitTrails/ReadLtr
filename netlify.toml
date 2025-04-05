@@ -2,6 +2,7 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  ignore_warnings = true
 
 # Handle SPA routing
 [[redirects]]
