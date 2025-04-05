@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRoute } from "wouter";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,9 @@ import {
   Plus,
   BookOpen,
   Monitor,
-  X
+  X,
+  Bookmark,
+  BookMarked
 } from "lucide-react";
 import { getArticleById, toggleFavorite, markAsRead } from "@/lib/articleService";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -35,6 +37,9 @@ import {
   incrementShareCount
 } from "@/lib/analyticsService";
 import { formatDistanceToNow } from "date-fns";
+import HighlightMenu from "@/components/article/HighlightMenu";
+import { getHighlightsByArticle, Highlight } from "@/lib/highlightService";
+import { toast } from "@/components/ui/toast";
 
 const ArticleDetailPage = () => {
   const [_, params] = useRoute("/article/:id");
@@ -48,6 +53,12 @@ const ArticleDetailPage = () => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [readingProgress, setReadingProgress] = useState(0);
   const contentRef = useRef<HTMLDivElement | null>(null);
+
+  // Highlighting state
+  const [selectedText, setSelectedText] = useState("");
+  const [highlightMenuPosition, setHighlightMenuPosition] = useState({ x: 0, y: 0 });
+  const [showHighlightMenu, setShowHighlightMenu] = useState(false);
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
   const lastUpdateRef = useRef<number>(Date.now());
   const isVisibleRef = useRef<boolean>(true);
 
@@ -56,6 +67,16 @@ const ArticleDetailPage = () => {
     queryKey: ['articles', 'detail', articleId],
     queryFn: () => getArticleById(articleId),
     enabled: !!articleId,
+  });
+
+  // Fetch highlights for this article
+  const { data: articleHighlights } = useQuery({
+    queryKey: ['highlights', articleId],
+    queryFn: () => getHighlightsByArticle(articleId),
+    enabled: !!articleId,
+    onSuccess: (data) => {
+      setHighlights(data);
+    },
   });
 
   // Toggle favorite mutation
@@ -199,6 +220,104 @@ const ArticleDetailPage = () => {
   const handleToggleFontType = () => {
     setFontType((prev) => prev === "serif" ? "sans-serif" : "serif");
   };
+
+  // Handle text selection for highlighting
+  const handleTextSelection = useCallback(() => {
+    const selection = window.getSelection();
+
+    if (!selection || selection.isCollapsed) {
+      // No text selected or selection collapsed
+      if (showHighlightMenu) {
+        setShowHighlightMenu(false);
+      }
+      return;
+    }
+
+    const text = selection.toString().trim();
+    if (!text || text.length < 2) {
+      return;
+    }
+
+    // Get selection position for the highlight menu
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+
+    setSelectedText(text);
+    setHighlightMenuPosition({
+      x: rect.left + (rect.width / 2),
+      y: rect.top
+    });
+    setShowHighlightMenu(true);
+  }, [showHighlightMenu]);
+
+  // Handle highlight creation
+  const handleHighlightCreated = (highlight: Highlight) => {
+    setHighlights((prev) => [...prev, highlight]);
+    queryClient.invalidateQueries({ queryKey: ['highlights', articleId] });
+  };
+
+  // Apply highlights to the content
+  const applyHighlightsToContent = useCallback(() => {
+    if (!contentRef.current || !highlights || highlights.length === 0) {
+      return;
+    }
+
+    // Create a temporary document to work with the content
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = article?.content || '';
+
+    // Sort highlights by length (longest first) to avoid nested highlights
+    const sortedHighlights = [...highlights].sort((a, b) => b.text.length - a.text.length);
+
+    // Apply each highlight
+    sortedHighlights.forEach(highlight => {
+      const textNodes = [];
+      const walker = document.createTreeWalker(
+        tempDiv,
+        NodeFilter.SHOW_TEXT,
+        null
+      );
+
+      let node;
+      while (node = walker.nextNode()) {
+        textNodes.push(node);
+      }
+
+      for (const textNode of textNodes) {
+        const content = textNode.nodeValue || '';
+        const index = content.indexOf(highlight.text);
+
+        if (index !== -1) {
+          const range = document.createRange();
+          range.setStart(textNode, index);
+          range.setEnd(textNode, index + highlight.text.length);
+
+          const span = document.createElement('span');
+          span.className = `highlight highlight-${highlight.color}`;
+          span.dataset.highlightId = highlight.id;
+          if (highlight.note) {
+            span.dataset.note = highlight.note;
+            span.title = highlight.note;
+          }
+
+          range.surroundContents(span);
+          break; // Only highlight the first occurrence
+        }
+      }
+    });
+
+    // Update the content with highlights
+    if (contentRef.current) {
+      contentRef.current.innerHTML = tempDiv.innerHTML;
+    }
+  }, [highlights, article?.content]);
+
+  // Apply highlights when content or highlights change
+  useEffect(() => {
+    if (article?.content && highlights) {
+      applyHighlightsToContent();
+    }
+  }, [article?.content, highlights, applyHighlightsToContent]);
 
   // Format published date
   const formatPublishedDate = (dateString?: string) => {
@@ -373,13 +492,26 @@ const ArticleDetailPage = () => {
           ref={contentRef}
           className={`prose dark:prose-invert max-w-none
             ${fontType === "serif" ? "prose-serif" : "prose-sans"}
-            article-content`}
+            article-content relative`}
           style={{
             fontSize: `${fontSize}px`,
             lineHeight: 1.7
           }}
+          onMouseUp={handleTextSelection}
+          onTouchEnd={handleTextSelection}
           dangerouslySetInnerHTML={{ __html: article.content || "" }}
         />
+
+        {/* Highlight menu */}
+        {showHighlightMenu && (
+          <HighlightMenu
+            selectedText={selectedText}
+            articleId={articleId}
+            position={highlightMenuPosition}
+            onClose={() => setShowHighlightMenu(false)}
+            onHighlightCreated={handleHighlightCreated}
+          />
+        )}
 
         {article.tags && article.tags.length > 0 && (
           <div className="mt-10 pt-6 border-t border-zinc-800">

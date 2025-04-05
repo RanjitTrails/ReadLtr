@@ -11,3 +11,69 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Article highlight styles */
+.highlight {
+  position: relative;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.highlight-yellow {
+  background-color: rgba(255, 235, 59, 0.3);
+}
+
+.highlight-blue {
+  background-color: rgba(33, 150, 243, 0.3);
+}
+
+.highlight-green {
+  background-color: rgba(76, 175, 80, 0.3);
+}
+
+.highlight-pink {
+  background-color: rgba(233, 30, 99, 0.3);
+}
+
+.highlight-purple {
+  background-color: rgba(156, 39, 176, 0.3);
+}
+
+/* Tooltip for highlights with notes */
+.highlight[data-note]:hover::after {
+  content: attr(data-note);
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: normal;
+  max-width: 300px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Article content styles */
+.article-content {
+  position: relative;
+}
+
+.article-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.article-content pre {
+  overflow-x: auto;
+  border-radius: 4px;
+}
+
+.article-content blockquote {
+  border-left-color: theme('colors.blue.500');
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 4px;
+}

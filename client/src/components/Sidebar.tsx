@@ -33,6 +33,8 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getAllTags } from "@/lib/articleService";
+import { getDueReviewCount } from "@/lib/spacedRepetition";
+import { Brain } from "lucide-react";
 
 // Define interface for navigation items
 interface NavItem {
@@ -56,6 +58,13 @@ export default function Sidebar() {
     queryFn: getAllTags,
   });
 
+  // Fetch review count
+  const { data: reviewCount = 0 } = useQuery({
+    queryKey: ["reviews", "count"],
+    queryFn: getDueReviewCount,
+    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
+  });
+
   const navItems: NavItem[] = [
     { href: "/", label: "Home", icon: Home },
     // Library and its subfolders are handled separately
@@ -63,6 +72,7 @@ export default function Sidebar() {
     { href: "/archive", label: "Archive", icon: Archive },
     { href: "/later", label: "Read Later", icon: Clock },
     { href: "/highlights", label: "Highlights", icon: BookMarked },
+    { href: "/review", label: "Daily Review", icon: Brain, badge: reviewCount > 0 ? reviewCount : undefined },
     { href: "/collections", label: "Collections", icon: Bookmark },
     { href: "/analytics", label: "Analytics", icon: BarChart },
   ];

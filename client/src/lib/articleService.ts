@@ -587,43 +587,30 @@ export async function markAsRead(articleId: string) {
 
 /**
  * Get all highlights for the current user
+ * @deprecated Use getAllHighlights from highlightService instead
  */
 export async function getHighlights(): Promise<any[]> {
   try {
-    // Get current user ID
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
+    // Import dynamically to avoid circular dependencies
+    const { getAllHighlights } = await import('./highlightService');
 
-    // For now, return mock data since we don't have a highlights table yet
-    // In a real implementation, this would query the highlights table
-    return [
-      {
-        id: '1',
-        text: 'The most important thing to remember is that you can learn anything if you put your mind to it.',
-        articleId: '1',
-        articleTitle: 'The Power of Learning',
-        createdAt: new Date().toISOString(),
-        color: 'yellow'
-      },
-      {
-        id: '2',
-        text: 'Reading is to the mind what exercise is to the body.',
-        articleId: '2',
-        articleTitle: 'Benefits of Reading',
-        createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-        color: 'blue'
-      },
-      {
-        id: '3',
-        text: 'The best way to predict the future is to create it.',
-        articleId: '3',
-        articleTitle: 'Innovation and Creativity',
-        createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-        color: 'green'
-      }
-    ];
+    // Get highlights from the highlight service
+    const highlights = await getAllHighlights();
+
+    // Transform to the format expected by the HighlightsList component
+    return highlights.map(highlight => ({
+      id: highlight.id,
+      text: highlight.text,
+      articleId: highlight.articleId,
+      articleTitle: highlight.article?.title || 'Unknown Article',
+      createdAt: highlight.createdAt,
+      color: highlight.color,
+      note: highlight.note
+    }));
   } catch (error) {
     console.error('Error fetching highlights:', error);
+
+    // Return empty array if there's an error
     return [];
   }
 }
