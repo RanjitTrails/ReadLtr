@@ -4,30 +4,34 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ToasterProvider } from "@/components/ui/toaster";
 import { AuthProvider, useAuth } from "./lib/api.tsx";
 import { OfflineProvider } from "./contexts/OfflineContext";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense, lazy } from "react";
 import { supabase } from "./lib/supabase";
 import { addSampleArticles } from "./lib/sampleArticles";
 import { toast } from "@/components/ui/toast";
-import NotFound from "@/pages/not-found";
-import Home from "@/pages/home";
-import Login from "@/pages/login";
-import Register from "@/pages/register";
-import List from "@/pages/list";
-import Favorites from "@/pages/favorites";
-import Archive from "@/pages/archive";
-import Tags from "@/pages/tags";
-import Article from "@/pages/article";
-import Settings from "@/pages/settings";
-import Help from "@/pages/help";
-import SaveArticle from "@/pages/save";
-import MobileAppPage from "@/pages/mobile";
-import Bookmarklet from "@/components/browser-extension/Bookmarklet";
-import ChromeExtension from "@/components/browser-extension/ChromeExtension";
-import ForgotPassword from "@/pages/forgot-password";
-import ResetPassword from "@/pages/reset-password";
-import WelcomeScreen from "@/components/onboarding/WelcomeScreen";
-import OnboardingDashboard from "@/components/onboarding/OnboardingDashboard";
+
+// Eagerly loaded components (critical for initial render)
 import Layout from "@/components/Layout";
+
+// Lazily loaded components
+const NotFound = lazy(() => import("@/pages/not-found"));
+const Home = lazy(() => import("@/pages/home"));
+const Login = lazy(() => import("@/pages/login"));
+const Register = lazy(() => import("@/pages/register"));
+const List = lazy(() => import("@/pages/list"));
+const Favorites = lazy(() => import("@/pages/favorites"));
+const Archive = lazy(() => import("@/pages/archive"));
+const Tags = lazy(() => import("@/pages/tags"));
+const Article = lazy(() => import("@/pages/article"));
+const Settings = lazy(() => import("@/pages/settings"));
+const Help = lazy(() => import("@/pages/help"));
+const SaveArticle = lazy(() => import("@/pages/save"));
+const MobileAppPage = lazy(() => import("@/pages/mobile"));
+const Bookmarklet = lazy(() => import("@/components/browser-extension/Bookmarklet"));
+const ChromeExtension = lazy(() => import("@/components/browser-extension/ChromeExtension"));
+const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
+const ResetPassword = lazy(() => import("@/pages/reset-password"));
+const WelcomeScreen = lazy(() => import("@/components/onboarding/WelcomeScreen"));
+const OnboardingDashboard = lazy(() => import("@/components/onboarding/OnboardingDashboard"));
 import "@/components/onboarding/onboarding.css";
 
 function Router() {
@@ -93,186 +97,88 @@ function Router() {
     }
   }, [user, isLoading]);
 
+  // Loading fallback component
+  const LoadingFallback = () => (
+    <div className="flex items-center justify-center h-screen bg-zinc-900">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+  );
+
   return (
     <>
-      {showWelcome && <WelcomeScreen onComplete={() => setShowWelcome(false)} />}
+      <Suspense fallback={<LoadingFallback />}>
+        {showWelcome && <WelcomeScreen onComplete={() => setShowWelcome(false)} />}
 
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/login" component={Login} />
-        <Route path="/register" component={Register} />
-        <Route path="/forgot-password" component={ForgotPassword} />
-        <Route path="/reset-password" component={ResetPassword} />
-        <Route path="/list" component={List} />
-        <Route path="/favorites" component={Favorites} />
-        <Route path="/archive" component={Archive} />
-        <Route path="/later" component={React.lazy(() => import('./pages/later'))} />
-        <Route path="/highlights" component={React.lazy(() => import('./pages/highlights'))} />
-        <Route path="/tags" component={Tags} />
-        <Route path="/tags/:tag" component={Tags} />
-        <Route path="/article/:id" component={Article} />
-        <Route path="/settings" component={Settings} />
-        <Route path="/help" component={Help} />
-        <Route path="/save" component={SaveArticle} />
-        <Route path="/mobile" component={MobileAppPage} />
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/login" component={Login} />
+          <Route path="/register" component={Register} />
+          <Route path="/forgot-password" component={ForgotPassword} />
+          <Route path="/reset-password" component={ResetPassword} />
+          <Route path="/list" component={List} />
+          <Route path="/favorites" component={Favorites} />
+          <Route path="/archive" component={Archive} />
+          <Route path="/later" component={lazy(() => import('./pages/later'))} />
+          <Route path="/highlights" component={lazy(() => import('./pages/highlights'))} />
+          <Route path="/tags" component={Tags} />
+          <Route path="/tags/:tag" component={Tags} />
+          <Route path="/article/:id" component={Article} />
+          <Route path="/settings" component={Settings} />
+          <Route path="/help" component={Help} />
+          <Route path="/save" component={SaveArticle} />
+          <Route path="/mobile" component={MobileAppPage} />
 
         {/* List routes for different content types */}
-        <Route path="/list/articles">
-          {() => {
-            const ArticlesPage = React.lazy(() => import('./pages/list/articles'));
-            return (
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <ArticlesPage />
-              </React.Suspense>
-            );
-          }}
-        </Route>
-        <Route path="/list/books">
-          {() => {
-            const BooksPage = React.lazy(() => import('./pages/list/books'));
-            return (
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <BooksPage />
-              </React.Suspense>
-            );
-          }}
-        </Route>
-        <Route path="/list/emails">
-          {() => {
-            const EmailsPage = React.lazy(() => import('./pages/list/emails'));
-            return (
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <EmailsPage />
-              </React.Suspense>
-            );
-          }}
-        </Route>
-        <Route path="/list/pdfs">
-          {() => {
-            const PDFsPage = React.lazy(() => import('./pages/list/pdfs'));
-            return (
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <PDFsPage />
-              </React.Suspense>
-            );
-          }}
-        </Route>
-        <Route path="/list/tweets">
-          {() => {
-            const TweetsPage = React.lazy(() => import('./pages/list/tweets'));
-            return (
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <TweetsPage />
-              </React.Suspense>
-            );
-          }}
-        </Route>
-        <Route path="/list/videos">
-          {() => {
-            const VideosPage = React.lazy(() => import('./pages/list/videos'));
-            return (
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <VideosPage />
-              </React.Suspense>
-            );
-          }}
-        </Route>
-        <Route path="/list/tags">
-          {() => {
-            const TagsListPage = React.lazy(() => import('./pages/list/tags'));
-            return (
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <TagsListPage />
-              </React.Suspense>
-            );
-          }}
-        </Route>
+        <Route path="/list/articles" component={lazy(() => import('./pages/list/articles'))} />
+        <Route path="/list/books" component={lazy(() => import('./pages/list/books'))} />
+        <Route path="/list/emails" component={lazy(() => import('./pages/list/emails'))} />
+        <Route path="/list/pdfs" component={lazy(() => import('./pages/list/pdfs'))} />
+        <Route path="/list/tweets" component={lazy(() => import('./pages/list/tweets'))} />
+        <Route path="/list/videos" component={lazy(() => import('./pages/list/videos'))} />
+        <Route path="/list/tags" component={lazy(() => import('./pages/list/tags'))} />
 
         {/* Analytics routes */}
-        <Route path="/analytics">
-          {() => {
-            const AnalyticsDashboard = React.lazy(() => import('./pages/analytics/index'));
-            return (
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <AnalyticsDashboard />
-              </React.Suspense>
-            );
-          }}
-        </Route>
+        <Route path="/analytics" component={lazy(() => import('./pages/analytics/index'))} />
 
         {/* Social features routes */}
-        <Route path="/profile/:id">
-          {({ id }) => {
-            const ProfilePage = React.lazy(() => import('./pages/profile/[id]'));
-            return (
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <ProfilePage />
-              </React.Suspense>
-            );
-          }}
-        </Route>
+        <Route path="/profile/:id" component={({ id }) => {
+          const ProfilePage = lazy(() => import('./pages/profile/[id]'));
+          return <ProfilePage id={id} />;
+        }} />
 
-        <Route path="/collections">
-          {() => {
-            const CollectionsPage = React.lazy(() => import('./pages/collections/index'));
-            return (
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <CollectionsPage />
-              </React.Suspense>
-            );
-          }}
-        </Route>
+        <Route path="/collections" component={lazy(() => import('./pages/collections/index'))} />
+        <Route path="/collections/new" component={lazy(() => import('./pages/collections/new'))} />
 
-        <Route path="/collections/new">
-          {() => {
-            const NewCollectionPage = React.lazy(() => import('./pages/collections/new'));
-            return (
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <NewCollectionPage />
-              </React.Suspense>
-            );
-          }}
-        </Route>
+        <Route path="/shared/article/:id" component={({ id }) => {
+          const SharedArticlePage = lazy(() => import('./pages/shared/article/[id]'));
+          return <SharedArticlePage id={id} />;
+        }} />
 
-        <Route path="/shared/article/:id">
-          {({ id }) => {
-            const SharedArticlePage = React.lazy(() => import('./pages/shared/article/[id]'));
-            return (
-              <React.Suspense fallback={<div>Loading...</div>}>
-                <SharedArticlePage />
-              </React.Suspense>
-            );
-          }}
-        </Route>
+        <Route path="/extensions/bookmarklet" component={() => (
+          <div className="container mx-auto p-4 py-8">
+            <h1 className="text-2xl font-bold mb-6">Browser Extensions</h1>
+            <Bookmarklet />
+          </div>
+        )} />
 
-        <Route path="/extensions/bookmarklet">
-          {() => (
-            <div className="container mx-auto p-4 py-8">
-              <h1 className="text-2xl font-bold mb-6">Browser Extensions</h1>
-              <Bookmarklet />
+        <Route path="/extensions/chrome" component={() => (
+          <div className="container mx-auto p-4 py-8">
+            <h1 className="text-2xl font-bold mb-6">Browser Extensions</h1>
+            <ChromeExtension />
+          </div>
+        )} />
+
+        <Route path="/onboarding" component={() => (
+          <Layout>
+            <div className="max-w-3xl mx-auto py-8">
+              <OnboardingDashboard />
             </div>
-          )}
-        </Route>
-        <Route path="/extensions/chrome">
-          {() => (
-            <div className="container mx-auto p-4 py-8">
-              <h1 className="text-2xl font-bold mb-6">Browser Extensions</h1>
-              <ChromeExtension />
-            </div>
-          )}
-        </Route>
+          </Layout>
+        )} />
 
-        <Route path="/onboarding">
-          {() => (
-            <Layout>
-              <div className="max-w-3xl mx-auto py-8">
-                <OnboardingDashboard />
-              </div>
-            </Layout>
-          )}
-        </Route>
         <Route component={NotFound} />
       </Switch>
+      </Suspense>
     </>
   );
 }
