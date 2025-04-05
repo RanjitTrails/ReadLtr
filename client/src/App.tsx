@@ -5,6 +5,7 @@ import { ToasterProvider } from "@/components/ui/toaster";
 import { AuthProvider, useAuth } from "./lib/api.tsx";
 import { OfflineProvider } from "./contexts/OfflineContext";
 import React, { useEffect, useState, Suspense, lazy } from "react";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { supabase } from "./lib/supabase";
 import { addSampleArticles } from "./lib/sampleArticles";
 import { toast } from "@/components/ui/toast";
@@ -216,15 +217,19 @@ function App() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <OfflineProvider>
-          <ToasterProvider>
-            <Router />
-          </ToasterProvider>
-        </OfflineProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <OfflineProvider>
+            <ToasterProvider>
+              <ErrorBoundary>
+                <Router />
+              </ErrorBoundary>
+            </ToasterProvider>
+          </OfflineProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

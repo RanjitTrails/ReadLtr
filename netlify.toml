@@ -8,6 +8,14 @@
   from = "/*"
   to = "/index.html"
   status = 200
+  force = true
+
+# Redirect to fallback page on error
+[[redirects]]
+  from = "/error"
+  to = "/fallback.html"
+  status = 200
+  force = true
 
 # Environment variable configuration
 [build.environment]
@@ -30,7 +38,7 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer-when-downgrade"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://ui-avatars.com https://*.unsplash.com https://*.githubusercontent.com https://*.googleusercontent.com https://*.ytimg.com https://*.twimg.com https://*.cdninstagram.com https://*.medium.com https://*.amazonaws.com; connect-src 'self' https://*.supabase.co https://api.readability.com; font-src 'self' data: https://fonts.gstatic.com; media-src 'self' https://*.youtube.com https://*.vimeo.com"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://api.readability.com https://*.netlify.app wss://*.supabase.co; font-src 'self' data: https://fonts.gstatic.com; media-src 'self' https://*.youtube.com https://*.vimeo.com; worker-src 'self' blob:"
 
 # Cache static assets
 [[headers]]

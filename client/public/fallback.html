@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReadLtr - Loading Error</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+    
+    .container {
+      max-width: 600px;
+      padding: 2rem;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #ffffff;
+    }
+    
+    p {
+      font-size: 1.1rem;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+      color: #b0b0b0;
+    }
+    
+    .logo {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 2rem;
+    }
+    
+    .card {
+      background-color: #1e1e1e;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border: 1px solid #333;
+    }
+    
+    .button {
+      display: inline-block;
+      background-color: #3b82f6;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: background-color 0.2s;
+      margin: 0.5rem;
+    }
+    
+    .button:hover {
+      background-color: #2563eb;
+    }
+    
+    .error-details {
+      background-color: #2d2d2d;
+      border-radius: 4px;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      text-align: left;
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: #f87171;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .troubleshooting {
+      margin-top: 2rem;
+      text-align: left;
+    }
+    
+    .troubleshooting h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .troubleshooting ul {
+      padding-left: 1.5rem;
+    }
+    
+    .troubleshooting li {
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="/logo.svg" alt="ReadLtr Logo" class="logo" onerror="this.src='/favicon.svg'; this.onerror=null;">
+    <h1>Oops! Something went wrong</h1>
+    
+    <div class="card">
+      <p>We're having trouble loading the ReadLtr application. This could be due to a temporary issue or a problem with your connection.</p>
+      
+      <div>
+        <a href="/" class="button" id="reload-btn">Reload App</a>
+        <a href="/?debug=true" class="button">Try Debug Mode</a>
+      </div>
+      
+      <div id="error-container" class="error-details" style="display: none;">
+        <div id="error-message">No error details available</div>
+      </div>
+    </div>
+    
+    <div class="troubleshooting">
+      <h2>Troubleshooting Steps</h2>
+      <ul>
+        <li>Clear your browser cache and cookies</li>
+        <li>Try using a different browser</li>
+        <li>Check your internet connection</li>
+        <li>Disable any browser extensions that might be interfering</li>
+        <li>If you're using a VPN, try disabling it temporarily</li>
+      </ul>
+    </div>
+  </div>
+  
+  <script>
+    // Capture any errors that might have occurred
+    window.addEventListener('error', function(event) {
+      const errorContainer = document.getElementById('error-container');
+      const errorMessage = document.getElementById('error-message');
+      
+      if (errorContainer && errorMessage) {
+        errorContainer.style.display = 'block';
+        errorMessage.textContent = `Error: ${event.message}\nAt: ${event.filename}:${event.lineno}:${event.colno}`;
+      }
+    });
+    
+    // Add reload functionality
+    document.getElementById('reload-btn').addEventListener('click', function(e) {
+      e.preventDefault();
+      // Clear cache and reload
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (let name of names) {
+            caches.delete(name);
+          }
+        });
+      }
+      
+      // Clear localStorage
+      try {
+        localStorage.clear();
+      } catch (e) {
+        console.error('Failed to clear localStorage:', e);
+      }
+      
+      // Reload with cache bypass
+      window.location.href = '/?t=' + Date.now();
+    });
+    
+    // Check if we were redirected here due to an error
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('error')) {
+      const errorContainer = document.getElementById('error-container');
+      const errorMessage = document.getElementById('error-message');
+      
+      if (errorContainer && errorMessage) {
+        errorContainer.style.display = 'block';
+        errorMessage.textContent = decodeURIComponent(urlParams.get('error'));
+      }
+    }
+  </script>
+</body>
+</html>
