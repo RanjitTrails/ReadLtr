@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReadLtr - Static Version</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --background: #09090b;
+      --foreground: #f1f5f9;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --card: #1e1e1e;
+      --card-foreground: #e2e8f0;
+      --border: #27272a;
+      --muted: #71717a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--background);
+      color: var(--foreground);
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    header {
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .nav-link {
+      color: var(--foreground);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-link:hover {
+      color: var(--primary);
+    }
+
+    .main {
+      padding: 2rem 0;
+    }
+
+    .card {
+      background-color: var(--card);
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--card-foreground);
+    }
+
+    .card-content {
+      color: var(--muted);
+    }
+
+    .button {
+      display: inline-block;
+      background-color: var(--primary);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.25rem;
+      text-decoration: none;
+      font-weight: 500;
+      transition: background-color 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+
+    .button:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .button-outline {
+      background-color: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+    }
+
+    .button-outline:hover {
+      background-color: rgba(59, 130, 246, 0.1);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .article-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .article-image {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 0.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .article-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .article-excerpt {
+      color: var(--muted);
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+      flex-grow: 1;
+    }
+
+    .article-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .status-message {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    .tab {
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      border-bottom-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .tab:hover:not(.active) {
+      color: var(--primary);
+      border-bottom-color: var(--border);
+    }
+
+    .search-bar {
+      display: flex;
+      margin-bottom: 1.5rem;
+    }
+
+    .search-input {
+      flex-grow: 1;
+      padding: 0.75rem 1rem;
+      background-color: #27272a;
+      border: 1px solid var(--border);
+      border-radius: 0.25rem 0 0 0.25rem;
+      color: var(--foreground);
+      outline: none;
+    }
+
+    .search-button {
+      padding: 0.75rem 1rem;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 0 0.25rem 0.25rem 0;
+      cursor: pointer;
+    }
+
+    footer {
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+
+      .nav-links {
+        flex-wrap: wrap;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="header-content">
+        <a href="#" class="logo">ReadLtr</a>
+        <nav>
+          <div class="nav-links">
+            <a href="#" class="nav-link">Home</a>
+            <a href="#" class="nav-link">Library</a>
+            <a href="#" class="nav-link">Highlights</a>
+            <a href="#" class="nav-link">Collections</a>
+            <a href="#" class="nav-link">Settings</a>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+      <div class="card">
+        <h2 class="card-title">Welcome to ReadLtr</h2>
+        <div class="card-content">
+          <p>This is a static version of the ReadLtr application. The dynamic React version is currently undergoing maintenance.</p>
+          <p style="margin-top: 1rem;">You can still explore the interface and see what features are available. This static version demonstrates the UI and functionality of the full app.</p>
+
+          <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="/" class="button">Refresh App</a>
+            <a href="/test.html" class="button button-outline">Test Page</a>
+            <a href="/minimal.html" class="button button-outline">Minimal Version</a>
+            <a href="/?debug=true" class="button button-outline">Debug Mode</a>
+          </div>
+
+          <div style="margin-top: 1.5rem; padding: 1rem; background-color: rgba(59, 130, 246, 0.1); border-radius: 0.25rem;">
+            <h3 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--primary);">Status Update</h3>
+            <p style="font-size: 0.875rem;">We're currently working on fixing some technical issues with the full application. This static version is available in the meantime to showcase the design and features.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">All</div>
+        <div class="tab">Articles</div>
+        <div class="tab">Videos</div>
+        <div class="tab">Tweets</div>
+      </div>
+
+      <div class="search-bar">
+        <input type="text" class="search-input" placeholder="Search your library...">
+        <button class="search-button">Search</button>
+      </div>
+
+      <div class="card" style="margin-top: 2rem;">
+        <h2 class="card-title">Recent Highlights</h2>
+        <div style="border-left: 3px solid #fbbf24; padding-left: 1rem; margin: 1rem 0;">
+          <blockquote style="font-style: italic; color: #e2e8f0;">
+            "The most important thing to remember is that you can learn anything if you put your mind to it."
+          </blockquote>
+          <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.75rem; color: var(--muted);">
+            <span>From: The Power of Learning</span>
+            <span>2 days ago</span>
+          </div>
+        </div>
+
+        <div style="border-left: 3px solid #60a5fa; padding-left: 1rem; margin: 1rem 0;">
+          <blockquote style="font-style: italic; color: #e2e8f0;">
+            "Reading is to the mind what exercise is to the body."
+          </blockquote>
+          <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.75rem; color: var(--muted);">
+            <span>From: Benefits of Reading</span>
+            <span>1 week ago</span>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 1.5rem;">
+          <a href="#" class="button button-outline">View All Highlights</a>
+        </div>
+      </div>
+
+      <h2 style="margin: 2rem 0 1rem 0; font-size: 1.5rem;">Your Reading List</h2>
+      <div class="grid">
+        <!-- Sample Articles -->
+        <div class="card article-card">
+          <img src="https://source.unsplash.com/random/300x150?tech" alt="Article image" class="article-image">
+          <h3 class="article-title">The Future of Web Development</h3>
+          <p class="article-excerpt">Exploring the latest trends and technologies shaping the future of web development.</p>
+          <div class="article-meta">
+            <span>5 min read</span>
+            <span>2 days ago</span>
+          </div>
+        </div>
+
+        <div class="card article-card">
+          <img src="https://source.unsplash.com/random/300x150?nature" alt="Article image" class="article-image">
+          <h3 class="article-title">Sustainable Living in 2023</h3>
+          <p class="article-excerpt">Practical tips for reducing your carbon footprint and living more sustainably.</p>
+          <div class="article-meta">
+            <span>8 min read</span>
+            <span>1 week ago</span>
+          </div>
+        </div>
+
+        <div class="card article-card">
+          <img src="https://source.unsplash.com/random/300x150?business" alt="Article image" class="article-image">
+          <h3 class="article-title">Remote Work Best Practices</h3>
+          <p class="article-excerpt">How to stay productive and maintain work-life balance in a remote environment.</p>
+          <div class="article-meta">
+            <span>6 min read</span>
+            <span>3 days ago</span>
+          </div>
+        </div>
+
+        <div class="card article-card">
+          <img src="https://source.unsplash.com/random/300x150?health" alt="Article image" class="article-image">
+          <h3 class="article-title">Mental Health in the Digital Age</h3>
+          <p class="article-excerpt">Strategies for maintaining mental wellbeing in an increasingly connected world.</p>
+          <div class="article-meta">
+            <span>10 min read</span>
+            <span>5 days ago</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; margin-bottom: 2rem;">
+        <div style="flex: 1; min-width: 200px; margin-bottom: 1.5rem;">
+          <h3 style="font-size: 1.25rem; margin-bottom: 1rem; color: var(--primary);">ReadLtr</h3>
+          <p style="color: var(--muted); max-width: 300px;">Your personal read-it-later app for saving and organizing articles, videos, and more.</p>
+        </div>
+
+        <div style="flex: 1; min-width: 200px; margin-bottom: 1.5rem;">
+          <h4 style="font-size: 1rem; margin-bottom: 0.75rem;">Features</h4>
+          <ul style="list-style: none; padding: 0;">
+            <li style="margin-bottom: 0.5rem;"><a href="#" style="color: var(--muted); text-decoration: none;">Article Saving</a></li>
+            <li style="margin-bottom: 0.5rem;"><a href="#" style="color: var(--muted); text-decoration: none;">Highlighting</a></li>
+            <li style="margin-bottom: 0.5rem;"><a href="#" style="color: var(--muted); text-decoration: none;">Collections</a></li>
+            <li style="margin-bottom: 0.5rem;"><a href="#" style="color: var(--muted); text-decoration: none;">Spaced Repetition</a></li>
+          </ul>
+        </div>
+
+        <div style="flex: 1; min-width: 200px; margin-bottom: 1.5rem;">
+          <h4 style="font-size: 1rem; margin-bottom: 0.75rem;">Resources</h4>
+          <ul style="list-style: none; padding: 0;">
+            <li style="margin-bottom: 0.5rem;"><a href="/test.html" style="color: var(--muted); text-decoration: none;">Test Page</a></li>
+            <li style="margin-bottom: 0.5rem;"><a href="/minimal.html" style="color: var(--muted); text-decoration: none;">Minimal Version</a></li>
+            <li style="margin-bottom: 0.5rem;"><a href="/?debug=true" style="color: var(--muted); text-decoration: none;">Debug Mode</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid var(--border); padding-top: 1.5rem; text-align: center;">
+        <p>ReadLtr - Your personal read-it-later app © 2023</p>
+        <p style="margin-top: 0.5rem;">This is a static demo version. <a href="/" style="color: var(--primary);">Try the full app</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Simple tab functionality
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // Log that the static page loaded successfully
+    console.log('Static app loaded successfully');
+  </script>
+</body>
+</html>

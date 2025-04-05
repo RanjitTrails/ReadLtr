@@ -1,0 +1,9 @@
+# Redirect all traffic to static app temporarily
+/ /static-app.html 200
+
+# Preserve access to test pages
+/test.html /test.html 200
+/minimal.html /minimal.html 200
+
+# Fallback for all other routes
+/* /static-app.html 200

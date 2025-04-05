@@ -4,17 +4,28 @@
   publish = "dist"
   ignore_warnings = true
 
-# Handle SPA routing
+# Temporarily redirect to static app
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/"
+  to = "/static-app.html"
   status = 200
   force = true
 
-# Redirect to fallback page on error
+# Preserve access to test pages
 [[redirects]]
-  from = "/error"
-  to = "/fallback.html"
+  from = "/test.html"
+  to = "/test.html"
+  status = 200
+
+[[redirects]]
+  from = "/minimal.html"
+  to = "/minimal.html"
+  status = 200
+
+# Fallback for all other routes to static app
+[[redirects]]
+  from = "/*"
+  to = "/static-app.html"
   status = 200
   force = true
 
