@@ -356,30 +356,7 @@ export function formatArticleContent(content: string): string {
   }
 }
 
-/**
- * Estimates reading time for a piece of text
- * @param text - The text to analyze
- * @returns estimated reading time in minutes
- */
-export function estimateReadingTime(text: string): number {
-  if (!text) return 1;
-
-  try {
-    // Remove HTML tags to get just the text
-    const textOnly = text.replace(/<[^>]*>/g, '');
-
-    // Average reading speed is about 200-250 words per minute
-    const wordsPerMinute = 225;
-    const wordCount = textOnly.trim().split(/\s+/).length;
-    const readingTime = Math.ceil(wordCount / wordsPerMinute);
-
-    // Return at least 1 minute
-    return Math.max(1, readingTime);
-  } catch (error) {
-    console.error('Error estimating reading time:', error);
-    return 1; // Default to 1 minute if estimation fails
-  }
-}
+// Using the estimateReadingTime function defined at the top of the file
 
 /**
  * Extracts keywords/topics from article content
