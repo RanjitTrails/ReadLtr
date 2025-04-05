@@ -33,6 +33,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Token refresh function
+  const refreshToken = async () => {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+
+      if (error) {
+        console.error('Token refresh error:', error);
+        // Force logout if refresh fails
+        await logout();
+        return false;
+      }
+
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.session ? convertUserData(data.session.user) : null);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Token refresh exception:', error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -50,6 +75,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Set up auto refresh before token expiration
+  useEffect(() => {
+    if (!session) return;
+
+    // Calculate when to refresh (5 minutes before expiration)
+    const expiresAt = new Date(session.expires_at * 1000);
+    const refreshTime = expiresAt.getTime() - (5 * 60 * 1000);
+    const timeUntilRefresh = refreshTime - Date.now();
+
+    if (timeUntilRefresh <= 0) {
+      // Refresh immediately if token is about to expire
+      refreshToken();
+      return;
+    }
+
+    // Set up timer to refresh token
+    const refreshTimer = setTimeout(() => {
+      refreshToken();
+    }, timeUntilRefresh);
+
+    return () => clearTimeout(refreshTimer);
+  }, [session]);
 
   // Convert Supabase user to app user format
   const convertUserData = async (supabaseUser: User): Promise<AuthUser> => {
@@ -72,14 +120,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const upsertProfile = async (userId: string, name: string) => {
     // Create avatar URL from name
     const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
-    
+
     // Insert or update profile
     const { error } = await supabase
       .from('profiles')
-      .upsert({ 
-        id: userId, 
-        name, 
-        avatar_url: avatar 
+      .upsert({
+        id: userId,
+        name,
+        avatar_url: avatar
       });
 
     if (error) throw error;
@@ -93,9 +141,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         email,
         password
       });
-      
+
       if (error) throw error;
-      
+
       if (data.user) {
         setUser(await convertUserData(data.user));
       }
@@ -116,13 +164,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         email,
         password
       });
-      
+
       if (error) throw error;
-      
+
       if (data.user) {
         // Create user profile
         await upsertProfile(data.user.id, name);
-        
+
         // Set user data
         setUser({
           id: data.user.id,
@@ -183,24 +231,24 @@ export async function apiClient<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   // Default headers
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers
   };
-  
+
   const config = {
     ...options,
     headers
   };
-  
+
   // Get session token for auth
   const { data } = await supabase.auth.getSession();
   if (data.session?.access_token) {
     (config.headers as any).Authorization = `Bearer ${data.session.access_token}`;
   }
-  
+
   try {
     const response = await fetch(url, config);
     if (!response.ok) {

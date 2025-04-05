@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, uuid, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, uuid, primaryKey, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -45,6 +45,7 @@ export const articles = pgTable("articles", {
   domain: text("domain"),
   content_type: text("content_type").default("articles"),
   read_progress: integer("read_progress").default(0),
+  last_read_at: timestamp("last_read_at", { withTimezone: true }),
   // Social fields
   is_public: boolean("is_public").default(false),
   like_count: integer("like_count").default(0),
@@ -239,3 +240,38 @@ export type Comment = typeof comments.$inferSelect;
 
 export type InsertCommentLike = z.infer<typeof insertCommentLikeSchema>;
 export type CommentLike = typeof comment_likes.$inferSelect;
+
+// Highlights table
+export const highlights = pgTable("highlights", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+  articleId: uuid("article_id").notNull().references(() => articles.id, { onDelete: 'cascade' }),
+  text: text("text").notNull(),
+  note: text("note"),
+  color: text("color").default("yellow"),
+  position: integer("position"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+});
+
+// Reading sessions table for analytics
+export const readingSessions = pgTable("reading_sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+  articleId: uuid("article_id").notNull().references(() => articles.id, { onDelete: 'cascade' }),
+  startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  duration: integer("duration"),
+  deviceInfo: jsonb("device_info"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+});
+
+// Create schemas for the new tables
+export const insertHighlightSchema = createInsertSchema(highlights);
+export const insertReadingSessionSchema = createInsertSchema(readingSessions);
+
+export type InsertHighlight = z.infer<typeof insertHighlightSchema>;
+export type Highlight = typeof highlights.$inferSelect;
+
+export type InsertReadingSession = z.infer<typeof insertReadingSessionSchema>;
+export type ReadingSession = typeof readingSessions.$inferSelect;

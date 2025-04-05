@@ -10,6 +10,8 @@ import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import fetch from "node-fetch";
 import { healthCheck } from "./health";
+import { authenticateToken, authenticateAdmin } from "./middleware/auth";
+import { authRateLimit, parserRateLimit } from "./middleware/rateLimit";
 
 // JWT Secret
 if (!process.env.JWT_SECRET) {
@@ -17,24 +19,7 @@ if (!process.env.JWT_SECRET) {
 }
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Middleware to verify JWT token
-const authenticateToken = (req: Request, res: Response, next: any) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ message: "Authentication required" });
-  }
-
-  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
-    if (err) {
-      return res.status(403).json({ message: "Invalid or expired token" });
-    }
-
-    req.body.userId = user.id;
-    next();
-  });
-};
+// JWT Secret is now handled in the auth middleware
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
@@ -44,7 +29,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health", healthCheck);
 
   // Article Parser Endpoint
-  app.post("/api/parse-article", authenticateToken, async (req: Request, res: Response) => {
+  app.post("/api/parse-article", authenticateToken, parserRateLimit, async (req: Request, res: Response) => {
     try {
       const { url } = req.body;
 
@@ -56,18 +41,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const domain = new URL(url).hostname.replace('www.', '');
       let content_type = 'articles';
 
-      if (url.includes('.pdf')) {
+      if (url.toLowerCase().endsWith('.pdf')) {
         content_type = 'pdfs';
       } else if (domain.includes('twitter.com') || domain.includes('x.com')) {
         content_type = 'tweets';
-      } else if (domain.includes('youtube.com') || domain.includes('vimeo.com')) {
+      } else if (domain.includes('youtube.com') || domain.includes('youtu.be') || domain.includes('vimeo.com')) {
         content_type = 'videos';
       } else if (url.includes('mailto:') || domain.includes('mail.') || domain.includes('gmail.com')) {
         content_type = 'emails';
-      } else if (domain.includes('amazon.com') && url.includes('/dp/')) {
+      } else if ((domain.includes('amazon.com') && url.includes('/dp/')) || domain.includes('goodreads.com') || domain.includes('books.google.com')) {
         content_type = 'books';
-      } else if (domain.includes('goodreads.com') || domain.includes('books.google.com')) {
-        content_type = 'books';
+      }
+
+      // Handle special content types
+      if (content_type === 'videos' && (domain.includes('youtube.com') || domain.includes('youtu.be'))) {
+        // Extract YouTube video ID
+        let videoId = '';
+        if (domain.includes('youtube.com')) {
+          const urlObj = new URL(url);
+          videoId = urlObj.searchParams.get('v') || '';
+        } else if (domain.includes('youtu.be')) {
+          videoId = url.split('/').pop() || '';
+        }
+
+        if (videoId) {
+          // Create embedded video content
+          const embedHtml = `
+            <div class="video-container">
+              <iframe
+                width="560"
+                height="315"
+                src="https://www.youtube.com/embed/${videoId}"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              ></iframe>
+            </div>
+          `;
+
+          // Try to get video metadata from oEmbed
+          try {
+            const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+            const oembedResponse = await fetch(oembedUrl);
+
+            if (oembedResponse.ok) {
+              const oembedData = await oembedResponse.json();
+
+              return res.status(200).json({
+                title: oembedData.title || 'YouTube Video',
+                url,
+                excerpt: oembedData.author_name ? `Video by ${oembedData.author_name}` : 'YouTube video',
+                content: embedHtml,
+                author: oembedData.author_name || '',
+                publishedDate: '',
+                image_url: oembedData.thumbnail_url || '',
+                content_type,
+                domain,
+                read_time: 5 // Estimate 5 minutes for videos
+              });
+            }
+          } catch (oembedError) {
+            console.error('Error fetching YouTube metadata:', oembedError);
+            // Continue with regular parsing if oEmbed fails
+          }
+        }
       }
 
       // Fetch the page content
@@ -78,7 +115,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (!response.ok) {
-        return res.status(400).json({ error: `Failed to fetch article: ${response.statusText}` });
+        return res.status(400).json({
+          error: `Failed to fetch article: ${response.statusText}`,
+          title: new URL(url).hostname,
+          url,
+          excerpt: "Content could not be extracted automatically.",
+          content: `<p>The article content could not be extracted automatically. <a href="${url}" target="_blank" rel="noopener noreferrer">View the original article</a>.</p>`,
+          content_type,
+          domain
+        });
       }
 
       const html = await response.text();
@@ -88,8 +133,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         url: url
       });
 
-      // Extract article content using Readability
-      const reader = new Readability(dom.window.document);
+      // Extract article content using Readability with improved configuration
+      const reader = new Readability(dom.window.document, {
+        classesToPreserve: ['video-container', 'responsive-image', 'table-wrapper'],
+        keepClasses: true,
+        charThreshold: 100 // Lower threshold to extract more content
+      });
       const article = reader.parse();
 
       if (!article) {
@@ -178,7 +227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API Key for Browser Extension
-  app.post("/api/auth/api-key", authenticateToken, async (req: Request, res: Response) => {
+  app.post("/api/auth/api-key", authenticateToken, authRateLimit, async (req: Request, res: Response) => {
     try {
       const userId = req.body.userId;
 
@@ -197,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Browser Extension Save Route
-  app.post("/api/extension/save", authenticateToken, async (req: Request, res: Response) => {
+  app.post("/api/extension/save", authenticateToken, parserRateLimit, async (req: Request, res: Response) => {
     try {
       const userId = req.body.userId;
       const { url, title, content, description, siteName, siteIcon } = req.body;
@@ -278,7 +327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/login", async (req: Request, res: Response) => {
+  app.post("/api/auth/login", authRateLimit, async (req: Request, res: Response) => {
     try {
       const { username, password } = req.body;
 

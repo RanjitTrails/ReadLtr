@@ -3,10 +3,40 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { validateSupabaseConnection } from "./supabase";
 import { createPool } from "./db";
+import { apiRateLimit } from "./middleware/rateLimit";
+import { setupCsrfProtection } from "./middleware/csrf";
+import helmet from "helmet";
 
 const app = express();
+
+// Basic middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://api.supabase.co", "https://www.youtube.com"],
+      frameSrc: ["'self'", "https://www.youtube.com"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: []
+    }
+  },
+  crossOriginEmbedderPolicy: false, // Allow embedding of resources
+  crossOriginResourcePolicy: { policy: "cross-origin" } // Allow cross-origin resource sharing
+}));
+
+// Apply rate limiting to API routes
+app.use('/api', apiRateLimit);
+
+// Setup CSRF protection
+setupCsrfProtection(app);
 
 app.use((req, res, next) => {
   const start = Date.now();
