@@ -9,7 +9,8 @@ import { visualizer } from "rollup-plugin-visualizer";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  base: '/',
   plugins: [
     react(),
     runtimeErrorOverlay(),
@@ -74,4 +75,4 @@ export default defineConfig({
       }
     },
   },
-});
+}));

@@ -2,9 +2,16 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 
-// Debug mode
+// Debug and minimal modes
 const urlParams = new URLSearchParams(window.location.search);
 const isDebugMode = urlParams.has('debug');
+const isMinimalMode = import.meta.env.VITE_MINIMAL_MODE === 'true' || urlParams.has('minimal');
+
+// Log configuration
+console.log('ReadLtr initializing...');
+console.log('Debug mode:', isDebugMode ? 'enabled' : 'disabled');
+console.log('Minimal mode:', isMinimalMode ? 'enabled' : 'disabled');
+console.log('Environment:', import.meta.env.MODE);
 
 // Simple fallback component
 const SimpleFallback = () => {
@@ -118,19 +125,44 @@ window.addEventListener('error', (event) => {
   }
 });
 
-// Log environment information
-console.log('ReadLtr initializing...');
-console.log('Debug mode:', isDebugMode ? 'enabled' : 'disabled');
-
 try {
-  // Try to render the minimal app
+  // Try to render the app
   const rootElement = document.getElementById('root');
   if (rootElement) {
-    createRoot(rootElement).render(<SimpleFallback />);
-    console.log('Minimal app rendered successfully');
+    // Always render the SimpleFallback in minimal mode or if requested via URL
+    if (isMinimalMode) {
+      createRoot(rootElement).render(<SimpleFallback />);
+      console.log('Minimal app rendered successfully');
+    } else {
+      // Try to dynamically import the full App component
+      import('./App')
+        .then((module) => {
+          const App = module.default;
+          createRoot(rootElement).render(<App />);
+          console.log('Full app rendered successfully');
+        })
+        .catch((error) => {
+          console.error('Failed to load full app, falling back to minimal version:', error);
+          createRoot(rootElement).render(<SimpleFallback />);
+        });
+    }
   } else {
     console.error('Root element not found');
   }
 } catch (error) {
-  console.error('Failed to render minimal app:', error);
+  console.error('Failed to render app:', error);
+
+  // Try to show a basic error message directly in the DOM
+  try {
+    const errorContainer = document.getElementById('error-container');
+    const errorMessage = document.getElementById('error-message');
+
+    if (errorContainer && errorMessage) {
+      errorContainer.style.display = 'block';
+      errorMessage.textContent = `Critical error: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  } catch (domError) {
+    // Last resort - alert
+    console.error('Failed to show error in DOM:', domError);
+  }
 }

@@ -1,9 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Check if we're in minimal mode
+const urlParams = new URLSearchParams(window.location.search);
+const isMinimalMode = import.meta.env.VITE_MINIMAL_MODE === 'true' || urlParams.has('minimal');
+
 // Get Supabase URL and key from environment variables
 // Use fallback values for development or if env vars are missing
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xyzcompany.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'public-anon-key';
+
+// Log configuration
+console.log('Supabase configuration:');
+console.log('- URL:', supabaseUrl);
+console.log('- Key:', supabaseAnonKey ? (supabaseAnonKey.substring(0, 10) + '...') : 'missing');
+console.log('- Minimal mode:', isMinimalMode ? 'enabled' : 'disabled');
 
 // Log warning instead of throwing error to prevent app from crashing
 if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
