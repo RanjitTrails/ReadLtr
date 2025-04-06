@@ -134,30 +134,27 @@ try {
       createRoot(rootElement).render(<SimpleFallback />);
       console.log('Minimal app rendered successfully');
     } else {
-      // Try to dynamically import the simplified App component first
-      import('./App.simple')
+      // Try to dynamically import the full App component first
+      import('./App')
         .then((module) => {
-          const SimpleApp = module.default;
-          createRoot(rootElement).render(<SimpleApp />);
-          console.log('Simple app rendered successfully');
-
-          // After the simple app is rendered, try to load the full app
-          setTimeout(() => {
-            console.log('Attempting to load full app...');
-            import('./App')
-              .then((fullModule) => {
-                const FullApp = fullModule.default;
-                console.log('Full app loaded successfully, but not rendering it yet');
-                // We don't render the full app yet, just log that it loaded
-              })
-              .catch((error) => {
-                console.error('Failed to load full app:', error);
-              });
-          }, 2000);
+          const App = module.default;
+          createRoot(rootElement).render(<App />);
+          console.log('Full app rendered successfully');
         })
         .catch((error) => {
-          console.error('Failed to load simple app, falling back to minimal version:', error);
-          createRoot(rootElement).render(<SimpleFallback />);
+          console.error('Failed to load full app, trying simplified version:', error);
+
+          // If full app fails, try the simplified version
+          import('./App.simple')
+            .then((module) => {
+              const SimpleApp = module.default;
+              createRoot(rootElement).render(<SimpleApp />);
+              console.log('Simple app rendered successfully');
+            })
+            .catch((simpleError) => {
+              console.error('Failed to load simple app, falling back to minimal version:', simpleError);
+              createRoot(rootElement).render(<SimpleFallback />);
+            });
         });
     }
   } else {

@@ -57,8 +57,8 @@ ReadLtr is a modern, clean read-it-later application that helps you save article
    - Copy `.env.example` to `.env.development`
    - Update with your Supabase URL and anon key:
      ```
-     VITE_SUPABASE_URL=https://your-project-id.supabase.co
-     VITE_SUPABASE_ANON_KEY=your-anon-key
+     VITE_SUPABASE_URL=https://stqnksklgaazgwsuwrxj.supabase.co
+     VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0cW5rc2tsZ2Fhemd3c3V3cnhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI3MjY4MzYsImV4cCI6MjA1ODMwMjgzNn0.JPQZZbUAHaNA8c__vInK_Jpj_OFq8GkHl8vNwus9OUI
      ```
 
 5. Start the development server
@@ -84,8 +84,8 @@ ReadLtr is a modern, clean read-it-later application that helps you save article
    - Go to Site settings > Environment variables
    - Add the following variables:
      ```
-     VITE_SUPABASE_URL=https://your-project-id.supabase.co
-     VITE_SUPABASE_ANON_KEY=your-anon-key
+     VITE_SUPABASE_URL=https://stqnksklgaazgwsuwrxj.supabase.co
+     VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0cW5rc2tsZ2Fhemd3c3V3cnhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI3MjY4MzYsImV4cCI6MjA1ODMwMjgzNn0.JPQZZbUAHaNA8c__vInK_Jpj_OFq8GkHl8vNwus9OUI
      ```
 
 4. Trigger deploy

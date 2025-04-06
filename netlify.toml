@@ -4,10 +4,10 @@
   publish = "dist"
   ignore_warnings = true
 
-# Temporarily redirect to static app
+# Handle SPA routing
 [[redirects]]
-  from = "/"
-  to = "/static-app.html"
+  from = "/*"
+  to = "/index.html"
   status = 200
   force = true
 
@@ -22,17 +22,21 @@
   to = "/minimal.html"
   status = 200
 
-# Fallback for all other routes to static app
+# Fallback for errors
 [[redirects]]
-  from = "/*"
-  to = "/static-app.html"
+  from = "/error"
+  to = "/fallback.html"
   status = 200
-  force = true
 
 # Environment variable configuration
 [build.environment]
   NODE_VERSION = "18"
   NPM_VERSION = "9"
+  VITE_APP_NAME = "ReadLtr"
+  VITE_API_URL = "https://preeminent-truffle-338deb.netlify.app/api"
+  VITE_MINIMAL_MODE = "false"
+  # Note: Sensitive environment variables like SUPABASE_URL, SUPABASE_ANON_KEY, DATABASE_URL, and JWT_SECRET
+  # should be set in the Netlify UI under Site settings > Build & deploy > Environment
 
 # Production context
 [context.production]
