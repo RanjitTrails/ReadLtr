@@ -8,7 +8,9 @@
     <meta name="theme-color" content="#09090b" />
     <title>ReadLtr - Save Articles for Later</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Error handler script - loads before any other scripts -->
+    <!-- Medium.js blocker - loads first to prevent Medium.js errors -->
+    <script src="/medium-blocker.js"></script>
+    <!-- Error handler script - loads before main application scripts -->
     <script src="/error-handler.js"></script>
     <style>
       body {
@@ -165,19 +167,37 @@
     <script>
       // Specific error handling for Medium.js error
       (function() {
+        // Define Medium.js functions to prevent errors
+        window.U1 = function() { return {}; };
+        window.S_ = function() { return {}; };
+        window.medium = { noConflict: function() { return {}; } };
+
+        // Block medium.js from loading
+        const originalAppendChild = Node.prototype.appendChild;
+        Node.prototype.appendChild = function(node) {
+          if (node.tagName === 'SCRIPT' && node.src && node.src.includes('medium')) {
+            console.warn('Blocked medium.js script from loading:', node.src);
+            return node; // Return the node without appending it
+          }
+          return originalAppendChild.call(this, node);
+        };
+
         // Prevent the U1 is not a function error in medium.js
         window.addEventListener('error', function(event) {
-          if (event.filename && event.filename.includes('medium.js')) {
+          if (event.filename && event.filename.includes('medium')) {
             console.warn('Blocked error from medium.js:', event.message);
             event.preventDefault();
             event.stopPropagation();
             return true; // Prevent the error from propagating
           }
-        }, true); // Use capture phase to intercept before other handlers
 
-        // Define U1 as a no-op function if it doesn't exist
-        // This prevents the "U1 is not a function" error
-        window.U1 = window.U1 || function() {};
+          if (event.message && (event.message.includes('U1') || event.message.includes('S_'))) {
+            console.warn('Blocked Medium-related function error:', event.message);
+            event.preventDefault();
+            event.stopPropagation();
+            return true; // Prevent the error from propagating
+          }
+        }, true); // Use capture phase to intercept before other handlers
       })();
     </script>
 
