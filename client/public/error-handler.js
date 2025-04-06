@@ -27,6 +27,7 @@
 
   // Define all possible Medium.js functions as no-ops
   window.U1 = function() { return {}; };
+  window.UI = function() { return {}; }; // Add UI function
   window.S_ = function() { return {}; };
   window.medium = window.medium || { noConflict: function() { return {}; } };
 
@@ -60,12 +61,28 @@
       return true; // Prevent the error from propagating
     }
 
-    // Check for the specific U1 error
-    if (event.message && (event.message.includes('U1 is not a function') || event.message.includes('S_'))) {
+    // Check for the specific U1 or UI error
+    if (event.message && (event.message.includes('U1 is not a function') || event.message.includes('UI is not a function') || event.message.includes('S_'))) {
       console.warn('Blocked Medium-related function error:', event.message);
       event.preventDefault();
       event.stopPropagation();
       return true; // Prevent the error from propagating
+    }
+
+    // Check for TrustedHTML errors
+    if (event.message && event.message.includes('innerHTML') && event.message.includes('TrustedHTML')) {
+      console.warn('TrustedHTML error detected:', event.message);
+      // Try to create a policy if it doesn't exist
+      if (window.trustedTypes && window.trustedTypes.createPolicy && !window.readltrPolicy) {
+        try {
+          window.readltrPolicy = window.trustedTypes.createPolicy('readltr-html', {
+            createHTML: (string) => string
+          });
+          console.log('TrustedTypes policy created in error handler');
+        } catch (e) {
+          console.error('Failed to create TrustedTypes policy:', e);
+        }
+      }
     }
   }, true); // Use capture phase to intercept before other handlers
 

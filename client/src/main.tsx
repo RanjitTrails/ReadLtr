@@ -113,9 +113,20 @@ window.addEventListener('error', (event) => {
     return;
   }
 
-  // Skip errors with "U1 is not a function" message
-  if (event.message && event.message.includes('U1 is not a function')) {
-    console.warn('Ignoring U1 function error:', event.message);
+  // Skip errors with "U1 is not a function" or "UI is not a function" message
+  if (event.message && (event.message.includes('U1 is not a function') || event.message.includes('UI is not a function'))) {
+    console.warn('Ignoring Medium-related function error:', event.message);
+    return;
+  }
+
+  // Handle MIME type errors specially
+  if (event.message && (
+    event.message.includes('MIME type') ||
+    event.message.includes('text/html') ||
+    event.message.includes('Failed to load module script')
+  )) {
+    console.error('MIME type error caught:', event.message);
+    // Let the error-page.js handler take care of this
     return;
   }
 

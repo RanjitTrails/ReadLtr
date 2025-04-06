@@ -1,6 +1,6 @@
 /**
  * Medium.js Blocker
- * 
+ *
  * This script specifically targets and blocks Medium.js from loading
  * and prevents related errors from breaking the application.
  */
@@ -10,8 +10,9 @@
 
   // Define Medium.js functions to prevent errors
   window.U1 = function() { return {}; };
+  window.UI = function() { return {}; }; // Add UI function
   window.S_ = function() { return {}; };
-  window.medium = window.medium || { 
+  window.medium = window.medium || {
     noConflict: function() { return {}; },
     getBreakingNews: function() { return {}; },
     getTopStories: function() { return {}; },
@@ -74,7 +75,8 @@
 
     // Check for specific Medium.js errors
     if (event.message && (
-        event.message.includes('U1 is not a function') || 
+        event.message.includes('U1 is not a function') ||
+        event.message.includes('UI is not a function') ||
         event.message.includes('S_') ||
         event.message.includes('medium')
       )) {
@@ -82,6 +84,22 @@
       event.preventDefault();
       event.stopPropagation();
       return true; // Prevent the error from propagating
+    }
+
+    // Check for TrustedHTML errors
+    if (event.message && event.message.includes('TrustedHTML')) {
+      console.warn('TrustedHTML error detected in medium-blocker:', event.message);
+      // Try to create a policy if it doesn't exist
+      if (window.trustedTypes && window.trustedTypes.createPolicy && !window.readltrPolicy) {
+        try {
+          window.readltrPolicy = window.trustedTypes.createPolicy('readltr-html', {
+            createHTML: (string) => string
+          });
+          console.log('TrustedTypes policy created in medium-blocker');
+        } catch (e) {
+          console.error('Failed to create TrustedTypes policy in medium-blocker:', e);
+        }
+      }
     }
   }, true); // Use capture phase to intercept before other handlers
 

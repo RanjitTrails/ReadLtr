@@ -8,7 +8,20 @@
     <meta name="theme-color" content="#09090b" />
     <title>ReadLtr - Save Articles for Later</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Medium.js blocker - loads first to prevent Medium.js errors -->
+    <!-- Trusted Types policy - loads first to handle CSP requirements -->
+    <script>
+      if (window.trustedTypes && window.trustedTypes.createPolicy) {
+        window.readltrPolicy = window.trustedTypes.createPolicy('readltr-html', {
+          createHTML: (string) => string
+        });
+        console.log('TrustedTypes policy created successfully');
+      } else {
+        console.log('TrustedTypes not supported in this browser');
+      }
+    </script>
+    <!-- Error page handler - loads first to handle critical errors -->
+    <script src="/error-page.js"></script>
+    <!-- Medium.js blocker - loads to prevent Medium.js errors -->
     <script src="/medium-blocker.js"></script>
     <!-- Error handler script - loads before main application scripts -->
     <script src="/error-handler.js"></script>
@@ -169,6 +182,7 @@
       (function() {
         // Define Medium.js functions to prevent errors
         window.U1 = function() { return {}; };
+        window.UI = function() { return {}; }; // Add UI function
         window.S_ = function() { return {}; };
         window.medium = { noConflict: function() { return {}; } };
 
@@ -191,7 +205,7 @@
             return true; // Prevent the error from propagating
           }
 
-          if (event.message && (event.message.includes('U1') || event.message.includes('S_'))) {
+          if (event.message && (event.message.includes('U1') || event.message.includes('UI') || event.message.includes('S_'))) {
             console.warn('Blocked Medium-related function error:', event.message);
             event.preventDefault();
             event.stopPropagation();
