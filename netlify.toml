@@ -28,6 +28,13 @@
   to = "/fallback.html"
   status = 200
 
+# Custom 404 page
+[[redirects]]
+  from = "/*"
+  to = "/fallback.html"
+  status = 404
+  force = false
+
 # Environment variable configuration
 [build.environment]
   NODE_VERSION = "18"
@@ -54,7 +61,7 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer-when-downgrade"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://api.readability.com https://*.netlify.app wss://*.supabase.co; font-src 'self' data: https://fonts.gstatic.com; media-src 'self' https://*.youtube.com https://*.vimeo.com; worker-src 'self' blob:"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://api.readability.com https://*.netlify.app wss://*.supabase.co; font-src 'self' data: https://fonts.gstatic.com; media-src 'self' https://*.youtube.com https://*.vimeo.com; worker-src 'self' blob:; block-all-mixed-content; frame-ancestors 'none'"
 
 # Cache static assets
 [[headers]]

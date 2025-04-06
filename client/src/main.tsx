@@ -13,8 +13,21 @@ console.log('Debug mode:', isDebugMode ? 'enabled' : 'disabled');
 console.log('Minimal mode:', isMinimalMode ? 'enabled' : 'disabled');
 console.log('Environment:', import.meta.env.MODE);
 
+// Import our app components
+import MinimalApp from './App.minimal';
+import BasicApp from './App.basic';
+
 // Simple fallback component
 const SimpleFallback = () => {
+  // Mark app as loaded
+  React.useEffect(() => {
+    const rootElement = document.getElementById('root');
+    if (rootElement) {
+      rootElement.classList.add('app-loaded');
+    }
+    console.log('Fallback component fully loaded');
+  }, []);
+
   return (
     <div style={{
       display: 'flex',
@@ -94,6 +107,18 @@ const SimpleFallback = () => {
 
 // Add global error handler
 window.addEventListener('error', (event) => {
+  // Skip Medium.js errors
+  if (event.filename && event.filename.includes('medium.js')) {
+    console.warn('Ignoring Medium.js error:', event.message);
+    return;
+  }
+
+  // Skip errors with "U1 is not a function" message
+  if (event.message && event.message.includes('U1 is not a function')) {
+    console.warn('Ignoring U1 function error:', event.message);
+    return;
+  }
+
   console.error('Global error caught:', event.error || event.message);
 
   // Update the error message in the DOM
@@ -129,12 +154,19 @@ try {
   // Try to render the app
   const rootElement = document.getElementById('root');
   if (rootElement) {
-    // Always render the SimpleFallback in minimal mode or if requested via URL
-    if (isMinimalMode) {
-      createRoot(rootElement).render(<SimpleFallback />);
+    // Determine which app to render based on URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const useBasicMode = urlParams.has('basic');
+    const useMinimalMode = urlParams.has('minimal') || isMinimalMode;
+
+    if (useMinimalMode) {
+      createRoot(rootElement).render(<MinimalApp />);
       console.log('Minimal app rendered successfully');
+    } else if (useBasicMode) {
+      createRoot(rootElement).render(<BasicApp />);
+      console.log('Basic app rendered successfully');
     } else {
-      // Try to dynamically import the full App component first
+      // Try to load the full App component
       import('./App')
         .then((module) => {
           const App = module.default;
@@ -142,9 +174,9 @@ try {
           console.log('Full app rendered successfully');
         })
         .catch((error) => {
-          console.error('Failed to load full app, trying simplified version:', error);
+          console.error('Failed to load full app, trying simple app:', error);
 
-          // If full app fails, try the simplified version
+          // Fall back to simple app if full app fails
           import('./App.simple')
             .then((module) => {
               const SimpleApp = module.default;

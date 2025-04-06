@@ -186,25 +186,43 @@ function Router() {
 
 function App() {
   const [isRecoveringSession, setIsRecoveringSession] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   // Recover session on app start
   useEffect(() => {
     const recoverSession = async () => {
       try {
+        console.log('Attempting to recover session...');
         // Check for existing session
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data, error: sessionError } = await supabase.auth.getSession();
 
-        if (session) {
+        if (sessionError) {
+          console.error('Session recovery error from Supabase:', sessionError);
+          throw sessionError;
+        }
+
+        if (data?.session) {
           console.log('Session recovered successfully');
+        } else {
+          console.log('No existing session found');
         }
       } catch (error) {
         console.error('Session recovery error:', error);
+        // Don't set error state here to allow the app to continue without a session
       } finally {
         setIsRecoveringSession(false);
       }
     };
 
-    recoverSession();
+    // Add a timeout to ensure we don't get stuck in loading state
+    const timeoutId = setTimeout(() => {
+      console.warn('Session recovery timed out');
+      setIsRecoveringSession(false);
+    }, 5000); // 5 second timeout
+
+    recoverSession().finally(() => clearTimeout(timeoutId));
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   // Show loading state while recovering session
@@ -216,18 +234,62 @@ function App() {
     );
   }
 
+  // If there's an error, show it
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-900 p-4 text-center">
+        <div className="max-w-md w-full bg-zinc-800 p-6 rounded-lg shadow-lg">
+          <h2 className="text-xl font-bold text-red-400 mb-4">Application Error</h2>
+          <p className="text-zinc-300 mb-4">
+            We're sorry, but there was an error loading the application.
+          </p>
+          <div className="bg-zinc-900 p-3 rounded mb-4 overflow-auto max-h-32 text-left">
+            <p className="text-red-300 text-sm font-mono">
+              {error.message || 'Unknown error'}
+            </p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors"
+          >
+            Reload Application
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Add a useEffect to mark the app as loaded
+  useEffect(() => {
+    // Add a class to the root element to indicate the app has loaded
+    const rootElement = document.getElementById('root');
+    if (rootElement) {
+      rootElement.classList.add('app-loaded');
+    }
+
+    // Log that the app has fully loaded
+    console.log('App fully loaded and rendered');
+  }, []);
+
+  // Wrap everything in error boundaries for better error handling
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <OfflineProvider>
-            <ToasterProvider>
-              <ErrorBoundary>
-                <Router />
-              </ErrorBoundary>
-            </ToasterProvider>
-          </OfflineProvider>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <ErrorBoundary>
+              <OfflineProvider>
+                <ErrorBoundary>
+                  <ToasterProvider>
+                    <ErrorBoundary>
+                      <Router />
+                    </ErrorBoundary>
+                  </ToasterProvider>
+                </ErrorBoundary>
+              </OfflineProvider>
+            </ErrorBoundary>
+          </AuthProvider>
+        </ErrorBoundary>
       </QueryClientProvider>
     </ErrorBoundary>
   );

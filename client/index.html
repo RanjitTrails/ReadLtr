@@ -8,6 +8,8 @@
     <meta name="theme-color" content="#09090b" />
     <title>ReadLtr - Save Articles for Later</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Error handler script - loads before any other scripts -->
+    <script src="/error-handler.js"></script>
     <style>
       body {
         background-color: #09090b;
@@ -113,8 +115,70 @@
         if (errorContainer && errorMessage) {
           errorContainer.style.display = 'block';
           errorMessage.textContent = 'Error: ' + (event.error?.message || event.message || 'Unknown error');
+
+          // Add stack trace for debugging
+          if (event.error?.stack && location.search.includes('debug=true')) {
+            const stackTrace = document.createElement('pre');
+            stackTrace.style.textAlign = 'left';
+            stackTrace.style.fontSize = '12px';
+            stackTrace.style.padding = '10px';
+            stackTrace.style.background = '#0f172a';
+            stackTrace.style.borderRadius = '4px';
+            stackTrace.style.marginTop = '10px';
+            stackTrace.style.overflow = 'auto';
+            stackTrace.style.maxHeight = '200px';
+            stackTrace.textContent = event.error.stack;
+            errorContainer.appendChild(stackTrace);
+          }
         }
       });
+
+      // Add unhandled promise rejection handler
+      window.addEventListener('unhandledrejection', function(event) {
+        console.error('Unhandled promise rejection:', event.reason);
+        const errorContainer = document.getElementById('error-container');
+        const errorMessage = document.getElementById('error-message');
+
+        if (errorContainer && errorMessage) {
+          errorContainer.style.display = 'block';
+          errorMessage.textContent = 'Promise Error: ' + (event.reason?.message || 'Unknown promise rejection');
+
+          // Add stack trace for debugging
+          if (event.reason?.stack && location.search.includes('debug=true')) {
+            const stackTrace = document.createElement('pre');
+            stackTrace.style.textAlign = 'left';
+            stackTrace.style.fontSize = '12px';
+            stackTrace.style.padding = '10px';
+            stackTrace.style.background = '#0f172a';
+            stackTrace.style.borderRadius = '4px';
+            stackTrace.style.marginTop = '10px';
+            stackTrace.style.overflow = 'auto';
+            stackTrace.style.maxHeight = '200px';
+            stackTrace.textContent = event.reason.stack;
+            errorContainer.appendChild(stackTrace);
+          }
+        }
+      });
+    </script>
+
+    <!-- Error handling for known issues -->
+    <script>
+      // Specific error handling for Medium.js error
+      (function() {
+        // Prevent the U1 is not a function error in medium.js
+        window.addEventListener('error', function(event) {
+          if (event.filename && event.filename.includes('medium.js')) {
+            console.warn('Blocked error from medium.js:', event.message);
+            event.preventDefault();
+            event.stopPropagation();
+            return true; // Prevent the error from propagating
+          }
+        }, true); // Use capture phase to intercept before other handlers
+
+        // Define U1 as a no-op function if it doesn't exist
+        // This prevents the "U1 is not a function" error
+        window.U1 = window.U1 || function() {};
+      })();
     </script>
 
     <!-- Main application script -->

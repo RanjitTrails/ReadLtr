@@ -26,6 +26,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     storage: localStorage
+  },
+  global: {
+    fetch: (...args) => {
+      return fetch(...args).catch(err => {
+        console.error('Supabase fetch error:', err);
+        throw err;
+      });
+    }
   }
 });
 
